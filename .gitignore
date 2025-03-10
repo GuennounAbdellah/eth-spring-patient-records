@@ -17,6 +17,7 @@ cache/
 *.json
 *.log
 
+
 # Ignore IDE and OS-specific files
 .DS_Store
 .vscode/

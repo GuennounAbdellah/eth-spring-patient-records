@@ -13,6 +13,7 @@ contract UserManagement {
         uint256 createdAt;
     }
 
+
     mapping(string => User) public users;
     mapping(address => string) public walletToUserId;
 
