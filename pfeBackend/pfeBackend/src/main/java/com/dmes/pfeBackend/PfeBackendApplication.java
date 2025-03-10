@@ -8,6 +8,6 @@ public class PfeBackendApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(PfeBackendApplication.class, args);
-		System.out.println("server is runing");
+		System.out.println("server is running");
 	}
 }
