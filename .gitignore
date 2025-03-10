@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 blockchain/artifacts/build-info/01453eeb9581d9ca9b5af5ce0049e000.json
 blockchain/artifacts/build-info/c60aa02fdb173403393968a47ec5efea.json
 blockchain/artifacts/contracts/HospitalConsultation.sol/HospitalConsultation.dbg.json
@@ -23,3 +24,21 @@ cache/
 .vscode/
 .idea/
 *.swp
+=======
+# Ignore node_modules and dependencies
+node_modules/
+.env
+.cache
+artifacts/
+cache/
+
+# Ignore Hardhat and Truffle build artifacts
+*.json
+*.log
+
+# Ignore IDE and OS-specific files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+>>>>>>> 9b491bb ( finished smart contract)
