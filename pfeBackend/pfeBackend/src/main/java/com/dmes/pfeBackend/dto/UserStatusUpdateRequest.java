@@ -1,7 +1,7 @@
 package com.dmes.pfeBackend.dto;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class UserStatusUpdateRequest {
     @NotBlank

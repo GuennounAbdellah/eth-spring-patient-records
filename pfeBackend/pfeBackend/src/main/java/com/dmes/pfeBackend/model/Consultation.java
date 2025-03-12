@@ -1,15 +1,10 @@
-package com.dmes.pfeBackend.dto;
+package com.dmes.pfeBackend.model;
 
-import jakarta.validation.constraints.NotBlank;
-
-public class ConsultationRequest {
-    @NotBlank
+public class Consultation {
     private String patientId;
-    
-    @NotBlank
     private String details;
-    
     private String metadata;
+    private long timestamp;
 
     // Getters and setters
     public String getPatientId() {
@@ -34,5 +29,13 @@ public class ConsultationRequest {
 
     public void setMetadata(String metadata) {
         this.metadata = metadata;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 }

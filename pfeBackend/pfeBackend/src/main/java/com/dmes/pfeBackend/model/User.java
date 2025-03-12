@@ -1,9 +1,8 @@
 package com.dmes.pfeBackend.model;
-ckchain.model;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
 @Entity
 @Table(name = "users")
 public class User {

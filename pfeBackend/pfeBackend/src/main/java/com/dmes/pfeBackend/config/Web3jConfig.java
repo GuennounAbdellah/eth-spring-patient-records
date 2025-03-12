@@ -7,7 +7,6 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
-import org.web3j.tx.Contract;
 import java.math.BigInteger;
 
 @Configuration

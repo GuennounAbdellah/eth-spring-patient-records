@@ -1,6 +1,6 @@
 package com.dmes.pfeBackend.service;
 
-import com.healthcare.blockchain.dto.AccessPermissionRequest;
+import com.dmes.pfeBackend.dto.AccessPermissionRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;

@@ -2,6 +2,9 @@ package com.dmes.pfeBackend.controller;
 
 import com.dmes.pfeBackend.dto.ConsultationRequest;
 import com.dmes.pfeBackend.dto.DeleteConsultationRequest;
+import com.dmes.pfeBackend.model.Consultation; // Add this import
+import com.dmes.pfeBackend.model.User;
+import com.dmes.pfeBackend.security.CurrentUser;
 import com.dmes.pfeBackend.service.ConsultationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,7 +42,7 @@ public class ConsultationController {
     }
 
     @GetMapping
-    public CompletableFuture<ResponseEntity<List>> getConsultations(
+    public CompletableFuture<ResponseEntity<List<Consultation>>> getConsultations( // Parameterize List with Consultation
             @RequestParam String patientId,
             @RequestParam String requesterId
     ) {

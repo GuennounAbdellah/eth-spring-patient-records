@@ -2,6 +2,8 @@ package com.dmes.pfeBackend.service;
 
 import com.dmes.pfeBackend.dto.ConsultationRequest;
 import com.dmes.pfeBackend.dto.DeleteConsultationRequest;
+import com.dmes.pfeBackend.model.Consultation;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,7 +26,8 @@ public class ConsultationService {
         return contractService.deleteConsultation(request.getPatientId(), request.getTimestamp());
     }
 
-    public CompletableFuture<List> getPatientConsultations(String patientId, String requesterId) {
+    public CompletableFuture<List<Consultation>> getPatientConsultations(String patientId, String requesterId) {
         return contractService.getPatientConsultations(patientId, requesterId);
     }
+    
 }

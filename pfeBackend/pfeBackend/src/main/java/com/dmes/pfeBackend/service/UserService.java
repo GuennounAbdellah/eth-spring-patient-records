@@ -1,10 +1,10 @@
-ackage com.dmes.pfeBackend.service;
+package com.dmes.pfeBackend.service;
 
-import com.healthcare.blockchain.dto.RegistrationRequest;
-import com.healthcare.blockchain.dto.UserStatusUpdateRequest;
-import com.healthcare.blockchain.model.Role;
-import com.healthcare.blockchain.model.User;
-import com.healthcare.blockchain.repository.UserRepository;
+import com.dmes.pfeBackend.dto.RegistrationRequest;
+import com.dmes.pfeBackend.dto.UserStatusUpdateRequest;
+import com.dmes.pfeBackend.model.Role;
+import com.dmes.pfeBackend.model.User;
+import com.dmes.pfeBackend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
