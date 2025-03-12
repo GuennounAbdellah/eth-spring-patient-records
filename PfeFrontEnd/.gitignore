@@ -1,0 +1,16 @@
+# Ignore node_modules and dependencies
+node_modules/
+.env
+.cache
+artifacts/
+cache/
+
+# Ignore Hardhat and Truffle build artifacts
+*.json
+*.log
+
+# Ignore IDE and OS-specific files
+.DS_Store
+.vscode/
+.idea/
+*.swp
