@@ -5,11 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class AuthResponse {
-    private String token;
+@AllArgsConstructor
+public class DoctorPatientsDTO {
     private String userId;
     private String username;
-    private String role;
+    private String walletAddress;
+    private String bloodGroup;
+
+    // Could add more fields as needed (e.g., name, specialization for patients)
 }

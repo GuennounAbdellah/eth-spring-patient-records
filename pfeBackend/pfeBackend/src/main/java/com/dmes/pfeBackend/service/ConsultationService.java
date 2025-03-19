@@ -6,6 +6,7 @@ import com.dmes.pfeBackend.model.Consultation;
 
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -23,11 +24,12 @@ public class ConsultationService {
     }
 
     public CompletableFuture<String> deleteConsultation(DeleteConsultationRequest request) {
-        return contractService.deleteConsultation(request.getPatientId(), request.getTimestamp());
+        // Convert Long to BigInteger
+        BigInteger timestamp = BigInteger.valueOf(request.getTimestamp());
+        return contractService.deleteConsultation(request.getPatientId(), timestamp);
     }
 
     public CompletableFuture<List<Consultation>> getPatientConsultations(String patientId, String requesterId) {
         return contractService.getPatientConsultations(patientId, requesterId);
     }
-    
 }

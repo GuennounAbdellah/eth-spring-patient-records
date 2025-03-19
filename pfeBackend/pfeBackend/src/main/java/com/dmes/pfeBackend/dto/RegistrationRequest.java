@@ -1,40 +1,33 @@
 package com.dmes.pfeBackend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import java.time.LocalDate;
 
+@Data
 public class RegistrationRequest {
-    @NotBlank
+    // Common fields
     private String username;
-    
-    @NotBlank
     private String password;
-    
-    @NotNull
     private String role;
-
-    // Getters and setters
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
+    private String walletAddress;
+    
+    // Patient fields
+    private String medicalRecordNumber;
+    private LocalDate dateOfBirth;
+    private String bloodGroup;
+    private String allergies;
+    private String chronicConditions;
+    private String emergencyContact;
+    
+    // Doctor fields
+    private String licenseNumber;
+    private String specialization;
+    private String hospitalAffiliation;
+    private String professionalBio;
+    private String officeHours;
+    
+    // Admin fields
+    private String department;
+    private String securityClearanceLevel;
+    private Boolean emergencyAccessGrantor;
 }

@@ -2,7 +2,7 @@ package com.dmes.pfeBackend.controller;
 
 import com.dmes.pfeBackend.dto.ConsultationRequest;
 import com.dmes.pfeBackend.dto.DeleteConsultationRequest;
-import com.dmes.pfeBackend.model.Consultation; // Add this import
+import com.dmes.pfeBackend.model.Consultation;
 import com.dmes.pfeBackend.model.User;
 import com.dmes.pfeBackend.security.CurrentUser;
 import com.dmes.pfeBackend.service.ConsultationService;
@@ -29,7 +29,7 @@ public class ConsultationController {
             @RequestBody ConsultationRequest request,
             @CurrentUser User doctor
     ) {
-        return consultationService.addConsultation(request, doctor.getUserId())
+        return consultationService.addConsultation(request, doctor.getId())
                 .thenApply(ResponseEntity::ok);
     }
 
@@ -42,11 +42,21 @@ public class ConsultationController {
     }
 
     @GetMapping
-    public CompletableFuture<ResponseEntity<List<Consultation>>> getConsultations( // Parameterize List with Consultation
+    public CompletableFuture<ResponseEntity<List<Consultation>>> getConsultations(
             @RequestParam String patientId,
             @RequestParam String requesterId
     ) {
         return consultationService.getPatientConsultations(patientId, requesterId)
+                .thenApply(ResponseEntity::ok);
+    }
+
+    @GetMapping("/patient")
+    @PreAuthorize("hasRole('PATIENT')")
+    public CompletableFuture<ResponseEntity<List<Consultation>>> getPatientConsultations(
+            @CurrentUser User patient
+    ) {
+        // Patient can see their own consultations
+        return consultationService.getPatientConsultations(patient.getId(), patient.getId())
                 .thenApply(ResponseEntity::ok);
     }
 }

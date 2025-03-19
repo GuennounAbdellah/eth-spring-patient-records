@@ -26,7 +26,7 @@ public class UserController {
             @CurrentUser User currentUser,
             @Valid @RequestBody WalletLinkRequest request
     ) {
-        User user = userService.linkWallet(currentUser.getUserId(), request.getWalletAddress());
+        User user = userService.linkWallet(currentUser.getId(), request.getWalletAddress());
         return ResponseEntity.ok(user);
     }
 
