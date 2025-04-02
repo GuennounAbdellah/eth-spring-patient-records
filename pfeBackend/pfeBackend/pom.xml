@@ -81,12 +81,18 @@
         </dependency>
 
         <!-- Web3j for Ethereum Integration -->
+    <!-- Web3j dependencies -->
         <dependency>
             <groupId>org.web3j</groupId>
             <artifactId>core</artifactId>
-            <version>${web3j.version}</version>
+            <version>4.9.8</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.web3j</groupId>
+            <artifactId>crypto</artifactId>
+            <version>4.9.8</version>
+        </dependency>
+            
         <!-- JWT for Authentication -->
 		<dependency>
 		    <groupId>io.jsonwebtoken</groupId>

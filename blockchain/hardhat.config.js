@@ -2,10 +2,26 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
 
 module.exports = {
-  solidity: "0.8.0",
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.0",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
+  },
   networks: {
-    hardhat: {
-      chainId: 1337,
+    ganache: {
+      url: "http://localhost:7545",
+      chainId: 5777,
+      accounts: {
+        mnemonic: "someone toilet under blind write misery tuition report basket such reopen current",
+      },
     },
   },
 };

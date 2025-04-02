@@ -1,140 +1,253 @@
 package com.dmes.pfeBackend.service;
 
-import com.dmes.pfeBackend.contract.HealthRecordContract;
+import com.dmes.pfeBackend.contract.HospitalConsultation;
 import com.dmes.pfeBackend.model.Consultation;
-import org.springframework.beans.factory.annotation.Value;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.gas.ContractGasProvider;
 
+import jakarta.annotation.PostConstruct;
+
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+// It uses Web3j to communicate with the Ethereum blockchain
 @Service
 public class ContractService {
 
     private final Web3j web3j;
+    private final Credentials credentials;
     private final ContractGasProvider gasProvider;
-    private final HealthRecordContract contract;
+    private final String contractAddress;
+    
+    private HospitalConsultation contract;
 
+    @Autowired
     public ContractService(
-            Web3j web3j,
+            Web3j web3j, 
+            Credentials credentials, 
             ContractGasProvider gasProvider,
-            @Value("${ethereum.contract.address}") String contractAddress,
-            @Value("${ethereum.wallet.private-key}") String privateKey) {
+            String contractAddress) {
         this.web3j = web3j;
+        this.credentials = credentials;
         this.gasProvider = gasProvider;
-        Credentials credentials = Credentials.create(privateKey);
-        this.contract = new HealthRecordContract(contractAddress, web3j, credentials, gasProvider);
+        this.contractAddress = contractAddress;
     }
 
-    public CompletableFuture<String> registerUser(String userId, String walletAddress) {
-        return contract.registerUser(userId, walletAddress)
+    @PostConstruct
+    public void init() {
+        // Initialize contract if address is provided
+        if (contractAddress != null && !contractAddress.isEmpty()) {
+            try {
+                this.contract = HospitalConsultation.load(
+                    contractAddress,
+                    web3j,
+                    credentials,
+                    gasProvider
+                );
+                
+                // Optionally validate contract is deployed
+                boolean isValid = contract.isValid();
+                if (!isValid) {
+                    System.err.println("!!!!!!Warning: Contract at address " + contractAddress + " does not appear to be valid!!!!!!!!");
+                }
+            } catch (Exception e) {
+                // Log error but don't fail startup
+                System.err.println("Failed to load contract: " + e.getMessage());
+            }
+        }
+    }
+   
+    // Helper method for async contract operations
+    private <T> CompletableFuture<T> executeContractOperation(
+    		Function<HospitalConsultation, CompletableFuture<T>> operation)
+    {
+    	
+        if (contract == null) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Contract not initialized"));
+        }
+        try {
+            return operation.apply(contract);
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(
+                new RuntimeException("Contract operation failed: " + e.getMessage(), e));
+        }
+    }
+    
+    // Helper method for synchronous contract operations
+    private <T> T executeContractOperationSync(Supplier<T> operation) {
+        if (contract == null) {
+            throw new IllegalStateException("Contract not initialized");
+        }
+        try {
+            return operation.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Contract operation failed: " + e.getMessage(), e);
+        }
+    }
+    
+    // User management functions
+    public CompletableFuture<Void> registerUser(String userId, String walletAddress, boolean isDoctor, boolean isAdmin) {
+        return executeContractOperation(contract -> 
+            contract.registerUser(userId, walletAddress, isDoctor, isAdmin)
                 .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to register user on blockchain", ex);
-                });
+                .thenApply(tx -> null)
+        );
     }
 
     public CompletableFuture<String> setUserStatus(String userId, boolean isActive) {
-        return contract.setUserStatus(userId, isActive)
+        return executeContractOperation(contract -> 
+            contract.setUserStatus(userId, isActive)
                 .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to update user status on blockchain", ex);
-                });
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
     }
-
+    
+    // Consultation functions
     public CompletableFuture<String> addConsultation(String patientId, String details, String metadata) {
-        return contract.addConsultation(patientId, details, metadata)
+        return executeContractOperation(contract -> 
+            contract.addConsultation(patientId, details, metadata)
                 .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to add consultation on blockchain", ex);
-                });
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
     }
-
-    public CompletableFuture<String> deleteConsultation(String patientId, Long timestamp) {
-        return contract.deleteConsultation(patientId, BigInteger.valueOf(timestamp))
+    
+    public CompletableFuture<String> deleteConsultation(String patientId, BigInteger timestamp) {
+        return executeContractOperation(contract -> 
+            contract.deleteConsultation(patientId, timestamp)
                 .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to delete consultation on blockchain", ex);
-                });
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
     }
-
+    
+    //Upon calling that function from the smart contract, the transaction status displays 'Pending'.
+    @SuppressWarnings("unchecked")
     public CompletableFuture<List<Consultation>> getPatientConsultations(String patientId, String requesterId) {
-        return contract.getPatientConsultations(patientId, requesterId)
-                .sendAsync()
-                .thenApply(this::mapToConsultations)
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to fetch consultations from blockchain", ex);
-                });
+        return executeContractOperation(contract -> 
+            CompletableFuture.supplyAsync(() -> {
+                try {
+                    // Get the raw data from the contract
+                    List<HospitalConsultation.Consultation> contractConsultations = 
+                        contract.getPatientConsultations(patientId, requesterId).send();
+                    
+                    // Map the contract consultations to your domain model
+                    List<Consultation> consultations = new ArrayList<>();
+                    
+                    for (HospitalConsultation.Consultation contractConsult : contractConsultations) {
+                        Consultation consultation = new Consultation();
+                        consultation.setPatientId(contractConsult.patientId);
+                        consultation.setDoctorId(contractConsult.doctorId);
+                        consultation.setDetails(contractConsult.details);
+                        consultation.setMetadata(contractConsult.metadata);
+                        consultation.setTimestamp(contractConsult.timestamp.longValue());
+                        consultation.setDeleted(contractConsult.isDeleted);
+                        
+                        consultations.add(consultation);
+                    }
+                    
+                    return consultations;
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Failed to get patient consultations: " + e.getMessage(), e);
+                }
+            })
+        );
     }
-
-    private List<Consultation> mapToConsultations(List<?> rawConsultations) {
-        return rawConsultations.stream()
-                .map(this::mapToConsultation)
-                .collect(Collectors.toList());
-    }
-
-    private Consultation mapToConsultation(Object rawConsultation) {
-        // Assuming rawConsultation is a DynamicStruct or similar Web3j type
-        // Map its fields to the Consultation class
-        Consultation consultation = new Consultation();
-        consultation.setPatientId((String) rawConsultation.get("patientId"));
-        consultation.setDetails((String) rawConsultation.get("details"));
-        consultation.setMetadata((String) rawConsultation.get("metadata"));
-        consultation.setTimestamp((Long) rawConsultation.get("timestamp"));
-        return consultation;
-    }
-
-    public CompletableFuture<String> grantAccess(String patientId, String doctorId, Long expiresAt) {
-        return contract.grantAccess(patientId, doctorId, BigInteger.valueOf(expiresAt))
-                .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to grant access on blockchain", ex);
-                });
-    }
-
-    public CompletableFuture<String> removeAccess(String patientId, String doctorId) {
-        return contract.removeAccess(patientId, doctorId)
-                .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to remove access on blockchain", ex);
-                });
-    }
-
+    
+    // Permission management
     public CompletableFuture<Boolean> isPermitted(String patientId, String requesterId) {
-        return contract.isPermitted(patientId, requesterId)
+        return executeContractOperation(contract -> 
+            contract.isPermitted(patientId, requesterId).sendAsync()
+        );
+    }
+    
+    public CompletableFuture<String> grantAccess(String patientId, String doctorId, BigInteger expiresAt) {
+        return executeContractOperation(contract -> 
+            contract.grantAccess(patientId, doctorId, expiresAt)
                 .sendAsync()
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to check permissions on blockchain", ex);
-                });
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
+    }
+    
+    public CompletableFuture<String> removeAccess(String patientId, String doctorId) {
+        return executeContractOperation(contract -> 
+            contract.removeAccess(patientId, doctorId)
+                .sendAsync()
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
+    }
+    
+    public List<String> getDoctorPatients(String doctorId) {
+        return executeContractOperationSync(() -> {
+            try {
+                @SuppressWarnings("unchecked") //Java can't guarantee the type inside the returned List at compile time
+                List<String> patients = (List<String>) contract.getDoctorPatients(doctorId).send();
+                return patients;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to get doctor patients: " + e.getMessage(), e);
+            }
+        });
     }
 
-    public CompletableFuture<String> toggleEmergencyMode(String patientId, boolean isEmergency) {
-        return contract.toggleEmergencyMode(patientId, isEmergency)
+    public List<String> getPatientDoctors(String patientId) {
+        return executeContractOperationSync(() -> {
+            try {
+                @SuppressWarnings("unchecked") 
+                List<String> doctors = (List<String>) contract.getPatientDoctors(patientId).send();
+                return doctors;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to get patient doctors: " + e.getMessage(), e);
+            }
+        });
+    }
+    
+    // Emergency functions
+    public CompletableFuture<String> toggleEmergencyMode(boolean active) {
+        return executeContractOperation(contract -> 
+            contract.toggleEmergencyMode(active)
                 .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to toggle emergency mode on blockchain", ex);
-                });
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
+    }
+    
+    public CompletableFuture<String> setEmergencyAccessor(String accessor, boolean canAccess) {
+        return executeContractOperation(contract -> 
+            contract.setEmergencyAccessor(accessor, canAccess)
+                .sendAsync()
+                .thenApply(TransactionReceipt::getTransactionHash)
+        );
+    }
+    
+    public boolean isEmergencyMode() {
+        return executeContractOperationSync(() -> {
+            try {
+                return contract.emergencyMode().send();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to check emergency mode: " + e.getMessage(), e);
+            }
+        });
     }
 
-    public CompletableFuture<String> setEmergencyAccessor(String patientId, String accessorId) {
-        return contract.setEmergencyAccessor(patientId, accessorId)
-                .sendAsync()
-                .thenApply(tx -> tx.getTransactionHash())
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to set emergency accessor on blockchain", ex);
-                });
+    // Add to ContractService.java
+    public HospitalConsultation getContract() {
+        if (contract == null) {
+            throw new IllegalStateException("Contract not initialized");
+        }
+        return contract;
     }
+
+    // Add getter for contractAddress
+    public String getContractAddress() {
+        return contractAddress;
+    }
+    
 }

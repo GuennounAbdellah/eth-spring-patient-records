@@ -1,19 +1,21 @@
 {
-  "name": "hardhat-tutorial",
+  "name": "blockchain",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "hardhat.config.js",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "DMES",
+  "keywords": [],
+  "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-waffle": "^2.0.6",
-    "chai": "^4.5.0",
-    "ethereum-waffle": "^3.4.4",
-    "ethers": "^5.7.2",
-    "hardhat": "^2.22.2"
+    "ethers": "^5.8.0",
+    "hardhat": "^2.22.19"
   }
 }

@@ -4,20 +4,16 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class RegistrationRequest {
-    // Common fields
+public class ProfileResponse {
+    // Common fields for all users
+    private String userId;
     private String username;
-    private String password;
     private String role;
     private String walletAddress;
+    private boolean active;
     
-    // Patient fields
-    private String medicalRecordNumber;
-    private LocalDate dateOfBirth;
-    private String bloodGroup;
-    private String allergies;
-    private String chronicConditions;
-    private String emergencyContact;
+    // Role-specific fields included for all responses
+    // (will be null if not applicable to the user's role)
     
     // Doctor fields
     private String licenseNumber;
@@ -25,6 +21,13 @@ public class RegistrationRequest {
     private String hospitalAffiliation;
     private String professionalBio;
     private String officeHours;
+    
+    // Patient fields
+    private LocalDate dateOfBirth;
+    private String bloodGroup;
+    private String allergies;
+    private String chronicConditions;
+    private String emergencyContact;
     
     // Admin fields
     private String department;
