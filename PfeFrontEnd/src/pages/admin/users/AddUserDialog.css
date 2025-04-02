@@ -1,0 +1,181 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 0;
+}
+
+/* 📌 Overlay du formulaire (fond semi-transparent pour l'effet popup) */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Fond sombre pour accentuer l'effet popup */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* 📌 Conteneur principal (carte flottante) */
+.dialog {
+    width: 500px; /* Largeur conservée à 500px */
+    max-width: 95%;
+    background: white;
+    border-radius: 12px; /* Coins arrondis pour l'effet carte */
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3); /* Ombre pour l'effet flottant */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 📌 En-tête */
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 2px solid #ddd;
+}
+
+.dialog-header h3 {
+    font-size: 15px;
+    color: #333;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #888;
+}
+
+.close-btn:hover {
+    color: red;
+}
+
+/* 📌 Conteneur qui regroupe tous les champs avec un fond commun */
+.form-container {
+    border: 2px solid #ccc; /* Bordure autour des champs */
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #fafafa; /* Fond gris clair */
+    margin: 0 14px 14px 14px; /* Marge pour éviter que le contenu touche les bords */
+}
+
+/* 📌 Disposition horizontale du formulaire */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Deux colonnes */
+    gap: 12px;
+}
+
+/* 📌 Colonne */
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 📌 Chaque ligne du formulaire */
+.form-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* 📌 Champ de formulaire */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 3px;
+    color: #444;
+}
+
+.form-group input,
+.form-group select {
+    font-size: 12px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: white;
+    outline: none;
+}
+
+/* 📌 Ajout d'une bordure bleue au focus */
+.form-group input:focus,
+.form-group select:focus {
+    border: 2px solid #1976d2;
+}
+
+/* 📌 Image de prévisualisation */
+.image-preview {
+    margin-top: 6px;
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+/* 📌 Boutons (maintenant en dehors du form-container) */
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 14px 14px 14px; /* Padding pour aligner avec le form-container */
+}
+
+.submit-btn,
+.cancel-btn {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.submit-btn {
+    background-color: #1976d2;
+    color: white;
+}
+
+.submit-btn:hover {
+    background-color: #1565c0;
+}
+
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* 📌 Responsive : Une seule colonne sur petits écrans */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+
+    .dialog {
+        width: 90%;
+    }
+}

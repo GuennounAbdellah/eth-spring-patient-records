@@ -1,0 +1,38 @@
+
+.add-consultation {
+    padding: 20px;
+  }
+  
+  .consultation-form {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .consultation-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .consultation-form input,
+  .consultation-form textarea {
+    margin-bottom: 10px;
+  }
+  
+  .consultation-form textarea {
+    height: 100px;
+  }
+  
+  .consultation-form button {
+    background: #1976d2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+  }
+  
+  .consultation-form button:hover {
+    background: #1565c0;
+  }

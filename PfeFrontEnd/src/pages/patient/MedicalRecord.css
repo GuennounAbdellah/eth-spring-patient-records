@@ -1,0 +1,73 @@
+
+.medical-record {
+    padding: 20px;
+  }
+  
+  .medical-record-content > div {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+  
+  .consultation-table,
+  .prescription-table,
+  .blockchain-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  
+  .consultation-table th,
+  .consultation-table td,
+  .prescription-table th,
+  .prescription-table td,
+  .blockchain-table th,
+  .blockchain-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .consultation-table th,
+  .prescription-table th,
+  .blockchain-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+  }
+  
+  .test-results ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .test-results li {
+    padding: 5px 0;
+  }
+  
+  .test-results a {
+    color: #1976d2;
+    text-decoration: none;
+  }
+  
+  .test-results a:hover {
+    text-decoration: underline;
+  }
+  
+  .error-message {
+    color: #f44336;
+    background: #ffebee;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .placeholder {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    color: #666;
+  }

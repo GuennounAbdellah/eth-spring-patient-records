@@ -1,0 +1,233 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 0;
+}
+
+/* 📌 Conteneur principal */
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 📌 Titre */
+.container h2 {
+    text-align: center;
+    font-size: 22px;
+    color: #333;
+    font-weight: bold;
+}
+
+/* 📌 Barre de recherche et filtres */
+.search-bar {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.select-role {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-left: 10px;
+}
+
+/* 📌 Tableau */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead {
+    background-color: #1976d2;
+    color: white;
+}
+
+.table th, .table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+/* 📌 Boutons */
+button {
+    background-color: #1976d2;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #1565c0;
+}
+
+/* 📌 Boutons de pagination */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.pagination button {
+    width: 120px;
+}
+
+/* ======================================= */
+/* 📌 Styles du formulaire d'ajout d'utilisateur */
+/* ======================================= */
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog {
+    width: 450px;
+    max-width: 90%;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 📌 En-tête du formulaire */
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.dialog-header h3 {
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #888;
+}
+
+.close-btn:hover {
+    color: red;
+}
+
+/* 📌 Champs du formulaire */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #444;
+}
+
+.form-group input,
+.form-group select {
+    font-size: 14px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #1976d2;
+    outline: none;
+}
+
+/* 📌 Boutons du formulaire */
+.dialog-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.submit-btn, .cancel-btn {
+    font-size: 14px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.submit-btn {
+    background-color: #1976d2;
+    color: white;
+}
+
+.submit-btn:hover {
+    background-color: #1565c0;
+}
+
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* 📌 Image de prévisualisation */
+.image-preview {
+    margin-top: 10px;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+/* 📌 Responsive Design */
+@media (max-width: 500px) {
+    .dialog {
+        width: 90%;
+    }
+
+    .dialog-actions {
+        flex-direction: column;
+    }
+
+    .submit-btn, .cancel-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
