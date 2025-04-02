@@ -1,15 +1,12 @@
 package com.dmes.pfeBackend.config;
 
-import com.dmes.pfeBackend.security.JwtAuthorizationFilter;
-import com.dmes.pfeBackend.security.JwtTokenProvider;
-import com.dmes.pfeBackend.service.UserDetailsServiceImpl;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +16,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.dmes.pfeBackend.security.JwtAuthorizationFilter;
+import com.dmes.pfeBackend.security.JwtTokenProvider;
+import com.dmes.pfeBackend.service.UserDetailsServiceImpl;
+
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import java.util.Arrays;
@@ -26,23 +27,24 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Configuration
-@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-	@Autowired
-	private JwtAuthorizationFilter jwtAuthorizationFilter;
+    private final JwtAuthorizationFilter jwtAuthorizationFilter;
     private final AuthenticationConfiguration authenticationConfiguration;
-	private UserDetailsServiceImpl userDetailsService;
-	private com.dmes.pfeBackend.security.JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserDetailsServiceImpl userDetailsService;
+
     @Autowired
-    public void JwtTokenProvider(UserDetailsServiceImpl userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
-    
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration,
-                          JwtTokenProvider jwtTokenProvider) {
+    public SecurityConfig(
+            AuthenticationConfiguration authenticationConfiguration,
+            JwtTokenProvider jwtTokenProvider,
+            JwtAuthorizationFilter jwtAuthorizationFilter,
+            UserDetailsServiceImpl userDetailsService) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.jwtAuthorizationFilter = jwtAuthorizationFilter;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -52,28 +54,35 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    	http
-	        .csrf(AbstractHttpConfigurer::disable)
-	        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS)) // Use stateless sessions
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
             .authorizeHttpRequests(auth -> auth
-            	    .requestMatchers("/api/auth/**").permitAll()
-            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
-            	    .requestMatchers("/api/doctors/**").hasRole("DOCTOR")
-            	    .requestMatchers("/api/patients/**").hasRole("PATIENT")
-            	    .anyRequest().authenticated()
-            	)
+                .requestMatchers("/api/auth/login", "/api/auth/register", "/api/setup/**").permitAll()
+                .requestMatchers("/api/permissions/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_ADMIN")
+                .requestMatchers("/api/consultations").hasAuthority("ROLE_DOCTOR")  
+                .requestMatchers("/api/consultations/patient").hasAuthority("ROLE_PATIENT")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/doctors/**").hasRole("DOCTOR")
+                .requestMatchers("/api/patients/**").hasRole("PATIENT")
+                .requestMatchers("/api/auth/register/doctor").hasRole("ADMIN")
+                .requestMatchers("/api/auth/register/patient").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
             .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
-
+    
         return http.build();
     }
 
+    
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // Your frontend URL
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); //  frontend URL
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

@@ -3,10 +3,18 @@
  the setup key is used to make sure that the request is coming from the right source 
  because we don't want to expose the endpoint to the public
  
+ POST /api/setup/admin
+Content-Type: application/json
+
+{
+  "setupKey": "SETUP_SECRET_KEY",
+  "username": "admin",
+  "password": "Password123",
+  "walletAddress": "0x43cB8645eCCA7A63A1333366b9E06b448CE0eBB2"
+}
+
  */
-/* 
-
-
+/*
 package com.dmes.pfeBackend.controller;
 
 import com.dmes.pfeBackend.model.Admin;
@@ -74,4 +82,5 @@ public class SetupController {
             ));
         }
     }
-}*/
+}
+*/

@@ -2,22 +2,22 @@ package com.dmes.pfeBackend.controller;
 
 import com.dmes.pfeBackend.dto.DoctorPatientsDTO;
 import com.dmes.pfeBackend.dto.PatientDoctorsDTO;
+import com.dmes.pfeBackend.model.Patient;
 import com.dmes.pfeBackend.model.Consultation;
 import com.dmes.pfeBackend.model.Doctor;
-import com.dmes.pfeBackend.model.Patient;
 import com.dmes.pfeBackend.model.User;
-import com.dmes.pfeBackend.security.CurrentUser;
 import com.dmes.pfeBackend.service.ConsultationService;
 import com.dmes.pfeBackend.service.ContractService;
 import com.dmes.pfeBackend.service.UserService;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,9 +40,22 @@ public class DashboardController {
      * Get all doctors that have access to the patient's records
      */
     @GetMapping("/patient/doctors")
-    @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<List<PatientDoctorsDTO>> getPatientDoctors(@CurrentUser User patient) {
+    public ResponseEntity<?> getPatientDoctors() {
         try {
+            // Get current authenticated user
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Not authenticated"));
+            }
+            
+            // Get username from authentication
+            String username = authentication.getName();
+            User patient = userService.findByUsername(username);
+            
+            if (patient == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+            }
+            
             // Get all doctor IDs that have access to this patient
             List<String> doctorIds = contractService.getPatientDoctors(patient.getId());
             
@@ -63,7 +76,7 @@ public class DashboardController {
             
             return ResponseEntity.ok(doctors);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -71,9 +84,22 @@ public class DashboardController {
      * Get all patients that the doctor has access to
      */
     @GetMapping("/doctor/patients")
-    @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<List<DoctorPatientsDTO>> getDoctorPatients(@CurrentUser User doctor) {
+    public ResponseEntity<?> getDoctorPatients() {
         try {
+            // Get current authenticated user
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Not authenticated"));
+            }
+            
+            // Get username from authentication
+            String username = authentication.getName();
+            User doctor = userService.findByUsername(username);
+            
+            if (doctor == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+            }
+            
             // Get all patient IDs that this doctor has access to
             List<String> patientIds = contractService.getDoctorPatients(doctor.getId());
             
@@ -93,7 +119,7 @@ public class DashboardController {
             
             return ResponseEntity.ok(patients);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -101,13 +127,25 @@ public class DashboardController {
      * Get consultations for a specific patient (for doctor's view)
      */
     @GetMapping("/doctor/patient/{patientId}/consultations")
-    @PreAuthorize("hasRole('DOCTOR')")
-    public CompletableFuture<ResponseEntity<List<Consultation>>> getPatientConsultationsForDoctor(
-            @PathVariable String patientId,
-            @CurrentUser User doctor
+    public ResponseEntity<?> getPatientConsultationsForDoctor(
+            @PathVariable String patientId
     ) {
-        return consultationService.getPatientConsultations(patientId, doctor.getId())
-                .thenApply(ResponseEntity::ok)
-                .exceptionally(e -> ResponseEntity.internalServerError().build());
+        try {
+            // Get current authenticated user
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            User doctor = userService.findByUsername(username);
+            
+            if (doctor == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+            }
+            
+            List<Consultation> consultations = consultationService.getPatientConsultations(
+                patientId, doctor.getId()).get();
+            
+            return ResponseEntity.ok(consultations);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
     }
 }

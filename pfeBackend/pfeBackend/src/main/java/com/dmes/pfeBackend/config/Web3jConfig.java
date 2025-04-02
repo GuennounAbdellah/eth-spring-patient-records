@@ -3,6 +3,7 @@ package com.dmes.pfeBackend.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -10,6 +11,7 @@ import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.StaticGasProvider;
 
 @Configuration
+@EnableMethodSecurity(prePostEnabled = true) 
 public class Web3jConfig {
 
     @Value("${web3j.contract.ganache-url:http://localhost:7545}")
@@ -30,7 +32,7 @@ public class Web3jConfig {
     @Bean
     public Web3j web3j() {
         return Web3j.build(new HttpService(ganacheUrl));
-    }
+    }  
 
     @Bean
     public Credentials credentials() {

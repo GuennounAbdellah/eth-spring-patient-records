@@ -1,6 +1,5 @@
 package com.dmes.pfeBackend.model;
 
-import org.hibernate.annotations.GenericGenerator;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -13,8 +12,7 @@ import lombok.Data;
 public abstract class User {
     
 	@Id
-	@GeneratedValue(generator = "uuid2")
-	@GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+	@GeneratedValue(strategy = GenerationType.UUID)
 	private String id;
     
     @Column(unique = true, nullable = false)

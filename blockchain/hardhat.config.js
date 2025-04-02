@@ -2,16 +2,26 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
 
 module.exports = {
-  solidity: "0.8.0",
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.0",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
+  },
   networks: {
     ganache: {
-      url: "http://127.0.0.1:7545", // Ganache default RPC server
+      url: "http://localhost:7545",
+      chainId: 5777,
+      accounts: {
+        mnemonic: "someone toilet under blind write misery tuition report basket such reopen current",
+      },
     },
-    localhost: {
-      url: "http://127.0.0.1:8545" // Hardhat local node
-    }
   },
-  mocha: {
-    timeout: 100000 // Increase timeout for tests
-  }
 };

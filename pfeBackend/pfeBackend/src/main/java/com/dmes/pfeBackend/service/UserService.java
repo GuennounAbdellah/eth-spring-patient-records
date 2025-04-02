@@ -1,5 +1,8 @@
 package com.dmes.pfeBackend.service;
 
+import com.dmes.pfeBackend.dto.DoctorRegistrationRequest;
+import com.dmes.pfeBackend.dto.PatientRegistrationRequest;
+import com.dmes.pfeBackend.dto.ProfileResponse;
 import com.dmes.pfeBackend.dto.RegistrationRequest;
 import com.dmes.pfeBackend.dto.UserStatusUpdateRequest;
 import com.dmes.pfeBackend.model.*;
@@ -39,7 +42,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.contractService = contractService;
     }
-    // 100%
+
     @Transactional
     public User registerUser(RegistrationRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -393,5 +396,119 @@ public class UserService {
      */
     public Optional<User> findByWalletAddress(String walletAddress) {
         return userRepository.findByWalletAddress(walletAddress);
+    }
+
+
+    public ProfileResponse getUserProfile(String userId) {
+        User user = findUserById(userId);
+        
+        ProfileResponse profile = new ProfileResponse();
+        profile.setUserId(user.getId());
+        profile.setUsername(user.getUsername());
+        profile.setRole(user.getRole().toString());
+        profile.setWalletAddress(user.getWalletAddress());
+        profile.setActive(user.isActive());
+        
+        // Add role-specific details based on user type
+        switch (user.getRole()) {
+            case DOCTOR:
+                Doctor doctor = (Doctor) user;
+                profile.setLicenseNumber(doctor.getLicenseNumber());
+                profile.setSpecialization(doctor.getSpecialization());
+                profile.setHospitalAffiliation(doctor.getHospitalAffiliation());
+                profile.setProfessionalBio(doctor.getProfessionalBio());
+                profile.setOfficeHours(doctor.getOfficeHours());
+                break;
+            case PATIENT:
+                Patient patient = (Patient) user;
+                profile.setDateOfBirth(patient.getDateOfBirth());
+                profile.setBloodGroup(patient.getBloodGroup());
+                profile.setAllergies(patient.getAllergies());
+                profile.setChronicConditions(patient.getChronicConditions());
+                profile.setEmergencyContact(patient.getEmergencyContact());
+                break;
+            case ADMIN:
+                Admin admin = (Admin) user;
+                profile.setDepartment(admin.getDepartment());
+                profile.setSecurityClearanceLevel(admin.getSecurityClearanceLevel());
+                profile.setEmergencyAccessGrantor(admin.getEmergencyAccessGrantor());
+                break;
+        }
+        
+        return profile;
+    }
+    public ProfileResponse getUserProfileByUsername(String username) {
+        User user = findByUsername(username);
+        return getUserProfile(user.getId()); // Use your existing method
+    }
+
+
+    @Transactional
+    public User registerDoctor(DoctorRegistrationRequest request) {
+        // Check if username is already taken
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("Username is already taken");
+        }
+        
+        Doctor doctor = new Doctor();
+        doctor.setUsername(request.getUsername());
+        doctor.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        doctor.setWalletAddress(request.getWalletAddress());
+        doctor.setRole(Role.DOCTOR);
+        doctor.setLicenseNumber(request.getLicenseNumber());
+        doctor.setSpecialization(request.getSpecialization());
+        doctor.setHospitalAffiliation(request.getHospitalAffiliation());
+        doctor.setActive(true);
+        
+        // Save to database first to get ID
+        Doctor savedDoctor = (Doctor) userRepository.save(doctor);
+        
+        // Register in blockchain
+        try {
+            contractService.registerUser(
+                savedDoctor.getId(),
+                savedDoctor.getWalletAddress(),
+                true,  // isDoctor
+                false  // isAdmin
+            ).join(); // Wait for completion
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to register doctor on blockchain: " + e.getMessage(), e);
+        }
+        
+        return savedDoctor;
+    }
+
+    @Transactional
+    public User registerPatient(PatientRegistrationRequest request) {
+        // Check if username is already taken
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("Username is already taken");
+        }
+        
+        Patient patient = new Patient();
+        patient.setUsername(request.getUsername());
+        patient.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        patient.setWalletAddress(request.getWalletAddress());
+        patient.setRole(Role.PATIENT);
+        patient.setMedicalRecordNumber(request.getMedicalRecordNumber());
+        patient.setDateOfBirth(request.getDateOfBirth());
+        patient.setActive(true);
+        
+        // Save to database first to get ID
+        Patient savedPatient = (Patient) userRepository.save(patient);
+        
+        // Register in blockchain
+        try {
+            contractService.registerUser(
+                savedPatient.getId(),
+                savedPatient.getWalletAddress(),
+                false,  // isDoctor
+                false   // isAdmin
+            ).join(); // Wait for completion
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to register patient on blockchain: " + e.getMessage(), e);
+        }
+        
+        return savedPatient;
     }
 }
