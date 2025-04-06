@@ -1,109 +1,166 @@
-
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
+import { dashboardService } from "../../services/dashboardService";
+import { consultationService } from "../../services/consultationService";
 import PatientInfo from "../../components/doctor/PatientInfo";
-import MedicalHistory from "../../components/doctor/MedicalHistory";
-import MedicalData from "../../components/doctor/MedicalData";
-import ConsultationHistory from "../../components/doctor/ConsultationHistory";
-import PrescriptionHistory from "../../components/doctor/PrescriptionHistory";
-import AddObservation from "../../components/doctor/AddObservation";
+import ConsultationHistory from "../../components/common/ConsultationHistory";
+import BlockchainTransactions from "../../components/common/BlockchainTransactions";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
+import ErrorMessage from "../../components/common/ErrorMessage";
+import SuccessMessage from "../../components/common/SuccessMessage";
 import "./PatientRecord.css";
 
 const PatientRecord = () => {
-  const { id } = useParams();
+  const { id: patientId } = useParams();
+  const location = useLocation();
   const [patient, setPatient] = useState(null);
-  const [medicalHistory, setMedicalHistory] = useState(null);
-  const [medicalData, setMedicalData] = useState(null);
   const [consultations, setConsultations] = useState([]);
-  const [prescriptions, setPrescriptions] = useState([]);
+  const [blockchainTransactions, setBlockchainTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(location.state?.message || null);
 
   useEffect(() => {
     const fetchPatientData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/doctor/patient/${id}`);
-        if (!response.ok) throw new Error("Erreur lors de la récupération des données du patient");
-        const data = await response.json();
-
-        setPatient({
-          id: data.id,
-          nom: data.nom,
-          prenom: data.prenom,
-          age: data.age,
-          sexe: data.sexe,
-          adresse: data.adresse,
-          telephone: data.telephone,
-        });
-
-        setMedicalHistory({
-          pathologies: data.pathologies || [],
-          allergies: data.allergies || [],
-          familyHistory: data.familyHistory || [],
-        });
-
-        setMedicalData({
-          bloodGroup: data.bloodGroup,
-          currentTreatments: data.currentTreatments || [],
-          testResults: data.testResults,
-        });
-
-        setConsultations(data.consultations || []);
-        setPrescriptions(data.prescriptions || []);
-
-        setLoading(false);
+        setLoading(true);
+        
+        // Fetch patient data and consultations in parallel
+        const [patients, patientConsultations] = await Promise.all([
+          dashboardService.getDoctorPatients(),
+          dashboardService.getPatientConsultationsForDoctor(patientId)
+        ]);
+        
+        // Find the specific patient
+        const foundPatient = patients.find(p => (p.id === patientId || p.userId === patientId));
+        
+        if (!foundPatient) {
+          throw new Error("Patient non trouvé ou accès non autorisé");
+        }
+        
+        // Ensure patient always has a fullName
+        if (!foundPatient.fullName) {
+          foundPatient.fullName = foundPatient.username;
+        }
+        
+        // For each consultation, add blockchain hash data
+        // In a real app, this would come from your blockchain service
+        const consultationsWithBlockchain = patientConsultations.map(consultation => ({
+          ...consultation,
+          blockchainHash: consultation.id || `0x${Math.random().toString(16).slice(2, 10)}`
+        }));
+        
+        // Extract mock blockchain transactions from consultations
+        const transactions = consultationsWithBlockchain.map(c => ({
+          hash: c.blockchainHash,
+          timestamp: c.timestamp || Date.now()/1000,
+          action: "Ajout de consultation",
+          from: "0xDoctorWallet", // Placeholder
+          to: "0xContractAddress" // Placeholder
+        }));
+        
+        setPatient(foundPatient);
+        setConsultations(consultationsWithBlockchain);
+        setBlockchainTransactions(transactions);
+        setError(null);
       } catch (err) {
-        setError("Impossible de se connecter au serveur. Veuillez vérifier que le backend est en cours d'exécution sur http://localhost:8080.");
+        console.error("Error fetching patient data:", err);
+        setError(err.message || "Impossible de charger les données du patient");
+      } finally {
         setLoading(false);
       }
     };
+    
+    if (patientId) {
+      fetchPatientData();
+    }
+    
+    // Clear success message after 5 seconds
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [patientId, successMessage]);
 
-    fetchPatientData();
-  }, [id]);
-
-  const handleAddObservation = async (data) => {
+  const handleDeleteConsultation = async (consultationId, timestamp) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette consultation ?")) {
+      return;
+    }
+    
     try {
-      const response = await fetch("http://localhost:8080/api/doctor/observations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ patientId: id, ...data }),
-      });
-      if (!response.ok) throw new Error("Erreur lors de l'ajout de l'observation");
-      const newObservation = await response.json();
-      setConsultations((prev) => [...prev, newObservation]);
+      setLoading(true);
+      // Use patientId and timestamp to delete the consultation (blockchain requirement)
+      await consultationService.deleteConsultation(patientId, timestamp);
+      setConsultations(consultations.filter(c => c.id !== consultationId));
+      setSuccessMessage("Consultation supprimée avec succès");
     } catch (err) {
-      console.error(err.message);
-      alert("Erreur lors de l'ajout de l'observation. Veuillez vérifier que le backend est en cours d'exécution.");
+      console.error("Error deleting consultation:", err);
+      setError("Erreur lors de la suppression de la consultation");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <div>Chargement...</div>;
+  if (loading && !patient) {
+    return <LoadingIndicator message="Chargement du dossier patient..." />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
+
+  if (!patient) {
+    return <ErrorMessage message="Patient non trouvé" />;
+  }
 
   return (
     <div className="patient-record">
-      <h1>Dossier médical {patient ? `de ${patient.nom} ${patient.prenom}` : ""}</h1>
-      {error && <div className="error-message">{error}</div>}
-      <div className="patient-details">
-        {patient ? (
+      {successMessage && <SuccessMessage message={successMessage} />}
+      
+      <div className="record-header">
+        <div>
+          <h1>Dossier de {patient.fullName}</h1>
+          <p className="patient-info">
+            <span className="patient-wallet">
+              Adresse blockchain: {patient.walletAddress ? 
+                `${patient.walletAddress.substring(0, 8)}...${patient.walletAddress.substring(patient.walletAddress.length - 6)}` : 
+                "Non renseignée"}
+            </span>
+          </p>
+        </div>
+        
+        <div className="record-actions">
+          <Link 
+            to={`/doctor/add-consultation/${patientId}`} 
+            className="add-consultation-button"
+          >
+            + Nouvelle consultation
+          </Link>
+        </div>
+      </div>
+      
+      <div className="record-content">
+        <div className="patient-section">
+          <h2>Informations patient</h2>
           <PatientInfo patient={patient} />
-        ) : (
-          <div className="placeholder">Informations du patient non disponibles.</div>
-        )}
-        {medicalHistory ? (
-          <MedicalHistory history={medicalHistory} />
-        ) : (
-          <div className="placeholder">Historique médical non disponible.</div>
-        )}
-        {medicalData ? (
-          <MedicalData data={medicalData} />
-        ) : (
-          <div className="placeholder">Données médicales non disponibles.</div>
-        )}
-        <ConsultationHistory consultations={consultations} />
-        <PrescriptionHistory prescriptions={prescriptions} />
-        <AddObservation onAdd={handleAddObservation} />
+        </div>
+        
+        <div className="consultations-section">
+          <h2>Historique des consultations</h2>
+          <ConsultationHistory 
+            consultations={consultations} 
+            onDelete={handleDeleteConsultation} 
+            role="doctor"
+          />
+        </div>
+        
+        <div className="blockchain-section">
+          <h2>Transactions blockchain</h2>
+          <BlockchainTransactions transactions={blockchainTransactions} />
+        </div>
       </div>
     </div>
   );

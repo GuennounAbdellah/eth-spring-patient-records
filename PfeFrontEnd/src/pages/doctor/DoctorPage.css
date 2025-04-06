@@ -83,3 +83,105 @@
     flex-direction: column;
     align-items: center;
 }
+
+.admin-layout,
+.doctor-layout,
+.patient-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.admin-container,
+.doctor-container,
+.patient-container {
+  display: flex;
+  flex: 1;
+}
+
+.admin-content,
+.doctor-content,
+.patient-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.doctor-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 100vh;
+  margin-left: 260px; /* Matches the width of NavBar */
+  padding: 20px;
+}
+
+/* Sidebar styling */
+.admin-sidebar,
+.doctor-sidebar,
+.patient-sidebar {
+  width: 250px;
+  background-color: #2c3e50;
+  color: white;
+  padding: 1rem 0;
+}
+
+.sidebar-header {
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: white;
+}
+
+.sidebar-nav {
+  margin-top: 1.5rem;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav li.active {
+  background-color: #3498db;
+}
+
+.nav-icon {
+  margin-right: 12px;
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .doctor-container {
+    flex-direction: column;
+  }
+
+  .doctor-sidebar {
+    width: 100%;
+    order: 2;
+  }
+
+  .doctor-content {
+    order: 1;
+  }
+}

@@ -1,0 +1,173 @@
+.patient-list-container {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .patient-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .patient-list-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.3rem;
+  }
+  
+  .patient-list-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .search-box {
+    position: relative;
+    min-width: 250px;
+  }
+  
+  .patient-search {
+    width: 100%;
+    padding: 0.6rem 2.5rem 0.6rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 0.9rem;
+  }
+  
+  .patient-search:focus {
+    outline: none;
+    border-color: #3F8996;
+    box-shadow: 0 0 0 2px rgba(63, 137, 150, 0.2);
+  }
+  
+  .search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8c8d;
+    font-style: normal;
+  }
+  
+  .sort-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .sort-control label {
+    color: #34495e;
+    font-size: 0.9rem;
+  }
+  
+  .sort-select {
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #2c3e50;
+  }
+  
+  .sort-select:focus {
+    outline: none;
+    border-color: #3F8996;
+  }
+  
+  .patient-table-container {
+    overflow-x: auto;
+  }
+  
+  .patient-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .patient-table th,
+  .patient-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .patient-table th {
+    background-color: #f8f9fa;
+    color: #34495e;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+  }
+  
+  .patient-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .table-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .view-patient-btn,
+  .add-consultation-btn {
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  
+  .view-patient-btn {
+    background-color: #3498db;
+    color: white;
+  }
+  
+  .view-patient-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .add-consultation-btn {
+    background-color: #2ecc71;
+    color: white;
+  }
+  
+  .add-consultation-btn:hover {
+    background-color: #27ae60;
+  }
+  
+  .empty-patient-list,
+  .patient-list-loading,
+  .patient-list-error {
+    padding: 2rem;
+    text-align: center;
+    color: #7f8c8d;
+  }
+  
+  .patient-list-error {
+    color: #e74c3c;
+  }
+  
+  @media (max-width: 768px) {
+    .patient-list-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .patient-list-controls {
+      width: 100%;
+    }
+    
+    .search-box {
+      width: 100%;
+    }
+    
+    .table-actions {
+      flex-direction: column;
+    }
+  }

@@ -1,64 +1,56 @@
-
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import "./AddUserDialog.css";
+import "./EditUserDialog.css"; // Use own CSS instead of AddUserDialog.css
 
-const EditUserDialog = (props) => {
-  const { isOpen, onClose, onEdit, user } = props;
+const EditUserDialog = ({ isOpen, onClose, onEdit, user, userType }) => {
+  // Use form fields that match backend
   const [formData, setFormData] = useState({
     id: "",
-    nom: "",
-    prenom: "",
+    username: "",
+    fullName: "",
     email: "",
-    specialite: "",
-    numeroIdentificationProfessionnel: "",
-    adressePratique: "",
-    numeroTelephone: "",
-    role: "",
-    nomHopital: "",
-    ville: "",
-    profileImage: "",
+    // Doctor specific
+    specialization: "",
+    licenseNumber: "",
+    hospitalAffiliation: "",
+    // Patient specific
+    dateOfBirth: "",
+    bloodGroup: "",
+    medicalRecordNumber: "",
+    walletAddress: "",
+    // Account status
+    active: true
   });
 
   useEffect(() => {
     if (user) {
+      // Set common fields
       setFormData({
         id: user.id || "",
-        nom: user.nom || "",
-        prenom: user.prenom || "",
+        username: user.username || "",
+        fullName: user.fullName || "",
         email: user.email || "",
-        specialite: user.specialite || "",
-        numeroIdentificationProfessionnel: user.numeroIdentificationProfessionnel || "",
-        adressePratique: user.adressePratique || "",
-        numeroTelephone: user.numeroTelephone || "",
-        role: user.role || "",
-        nomHopital: user.nomHopital || "",
-        ville: user.ville || "",
-        profileImage: user.profileImage || "",
+        // Doctor fields
+        specialization: user.specialization || "",
+        licenseNumber: user.licenseNumber || "",
+        hospitalAffiliation: user.hospitalAffiliation || "",
+        // Patient fields
+        dateOfBirth: user.dateOfBirth || "",
+        bloodGroup: user.bloodGroup || "",
+        medicalRecordNumber: user.medicalRecordNumber || "",
+        walletAddress: user.walletAddress || "",
+        // Status
+        active: user.active !== undefined ? user.active : true
       });
     }
   }, [user]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          profileImage: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleSubmit = (e) => {
@@ -72,34 +64,37 @@ const EditUserDialog = (props) => {
     <div className="dialog-overlay">
       <div className="dialog">
         <div className="dialog-header">
-          <h3>Modifier un utilisateur</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <h3>Modifier {userType === "admin" ? "un administrateur" : 
+                        userType === "doctor" ? "un médecin" : "un patient"}</h3>
+          <button className="close-btn" onClick={onClose}>
+            ×
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="form-grid">
-            {/* Colonne gauche */}
-            <div className="form-column">
+          <div className="form-container">
+            {/* Common fields for all users */}
+            <div className="form-section">
+              <h4>Informations générales</h4>
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="nom">Nom</label>
+                  <label htmlFor="username">Nom d'utilisateur</label>
                   <input
                     type="text"
-                    id="nom"
-                    name="nom"
-                    value={formData.nom}
-                    onChange={handleInputChange}
-                    required
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    disabled // Username shouldn't be editable
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="prenom">Prénom</label>
+                  <label htmlFor="fullName">Nom complet</label>
                   <input
                     type="text"
-                    id="prenom"
-                    name="prenom"
-                    value={formData.prenom}
-                    onChange={handleInputChange}
-                    required
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -111,122 +106,136 @@ const EditUserDialog = (props) => {
                     id="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleInputChange}
-                    required
+                    onChange={handleChange}
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="specialite">Spécialité</label>
-                  <input
-                    type="text"
-                    id="specialite"
-                    name="specialite"
-                    value={formData.specialite}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="numeroIdentificationProfessionnel">Numéro d'identification</label>
-                  <input
-                    type="text"
-                    id="numeroIdentificationProfessionnel"
-                    name="numeroIdentificationProfessionnel"
-                    value={formData.numeroIdentificationProfessionnel}
-                    onChange={handleInputChange}
-                  />
+                  <label htmlFor="active">Statut du compte</label>
+                  <div className="toggle-container">
+                    <label className="toggle">
+                      <input
+                        type="checkbox"
+                        name="active"
+                        checked={formData.active}
+                        onChange={handleChange}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                    <span className="toggle-label">
+                      {formData.active ? "Actif" : "Inactif"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-            {/* Colonne droite */}
-            <div className="form-column">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="adressePratique">Adresse de pratique</label>
-                  <input
-                    type="text"
-                    id="adressePratique"
-                    name="adressePratique"
-                    value={formData.adressePratique}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="numeroTelephone">Numéro de téléphone</label>
-                  <input
-                    type="tel"
-                    id="numeroTelephone"
-                    name="numeroTelephone"
-                    value={formData.numeroTelephone}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="role">Rôle</label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Sélectionner un rôle</option>
-                    <option value="admin">Admin</option>
-                    <option value="superAdmin">Super Admin</option>
-                    <option value="doctor">Docteur</option>
-                    <option value="patient">Patient</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="nomHopital">Nom de l'hôpital</label>
-                  <input
-                    type="text"
-                    id="nomHopital"
-                    name="nomHopital"
-                    value={formData.nomHopital}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="ville">Ville</label>
-                  <input
-                    type="text"
-                    id="ville"
-                    name="ville"
-                    value={formData.ville}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="profileImage">Photo de profil</label>
-                  <input
-                    type="file"
-                    id="profileImage"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                  {formData.profileImage && (
-                    <img
-                      src={formData.profileImage}
-                      alt="Prévisualisation"
-                      className="image-preview"
+            
+            {/* Doctor specific fields */}
+            {userType === "doctor" && (
+              <div className="form-section">
+                <h4>Informations du médecin</h4>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="specialization">Spécialité</label>
+                    <input
+                      type="text"
+                      id="specialization"
+                      name="specialization"
+                      value={formData.specialization}
+                      onChange={handleChange}
                     />
-                  )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="licenseNumber">Numéro de licence</label>
+                    <input
+                      type="text"
+                      id="licenseNumber"
+                      name="licenseNumber"
+                      value={formData.licenseNumber}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="hospitalAffiliation">Affiliation hospitalière</label>
+                  <input
+                    type="text"
+                    id="hospitalAffiliation"
+                    name="hospitalAffiliation"
+                    value={formData.hospitalAffiliation}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
-            </div>
+            )}
+            
+            {/* Patient specific fields */}
+            {userType === "patient" && (
+              <div className="form-section">
+                <h4>Informations du patient</h4>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="dateOfBirth">Date de naissance</label>
+                    <input
+                      type="date"
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="bloodGroup">Groupe sanguin</label>
+                    <select
+                      id="bloodGroup"
+                      name="bloodGroup"
+                      value={formData.bloodGroup}
+                      onChange={handleChange}
+                    >
+                      <option value="">Sélectionner</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="medicalRecordNumber">Numéro de dossier médical</label>
+                    <input
+                      type="text"
+                      id="medicalRecordNumber"
+                      name="medicalRecordNumber"
+                      value={formData.medicalRecordNumber}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="walletAddress">Adresse wallet (optionnel)</label>
+                    <input
+                      type="text"
+                      id="walletAddress"
+                      name="walletAddress"
+                      value={formData.walletAddress}
+                      onChange={handleChange}
+                      placeholder="0x..."
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+          
           <div className="dialog-actions">
             <button type="button" className="cancel-btn" onClick={onClose}>
               Annuler
             </button>
             <button type="submit" className="submit-btn">
-              Modifier
+              Enregistrer
             </button>
           </div>
         </form>
@@ -240,6 +249,7 @@ EditUserDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   user: PropTypes.object,
+  userType: PropTypes.string.isRequired,
 };
 
 export default EditUserDialog;

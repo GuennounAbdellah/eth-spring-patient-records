@@ -237,17 +237,4 @@ public class ContractService {
         });
     }
 
-    // Add to ContractService.java
-    public HospitalConsultation getContract() {
-        if (contract == null) {
-            throw new IllegalStateException("Contract not initialized");
-        }
-        return contract;
-    }
-
-    // Add getter for contractAddress
-    public String getContractAddress() {
-        return contractAddress;
-    }
-    
 }

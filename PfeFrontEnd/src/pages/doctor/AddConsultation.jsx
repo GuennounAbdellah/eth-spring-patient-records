@@ -1,33 +1,99 @@
-
-import { useParams } from "react-router-dom";
-import ConsultationForm from "../../components/doctor/ConsultationForm";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { dashboardService } from "../../services/dashboardService";
+import { consultationService } from "../../services/consultationService";
+import ConsultationForm from "../../components/common/ConsultationForm";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
+import ErrorMessage from "../../components/common/ErrorMessage";
 import "./AddConsultation.css";
 
 const AddConsultation = () => {
   const { patientId } = useParams();
+  const navigate = useNavigate();
+  const [patient, setPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = async (data) => {
+  useEffect(() => {
+    const fetchPatientDetails = async () => {
+      setLoading(true);
+      try {
+        const patients = await dashboardService.getDoctorPatients();
+        const foundPatient = patients.find(p => p.id === patientId);
+        
+        if (!foundPatient) {
+          throw new Error("Patient non trouvé ou accès refusé");
+        }
+        
+        // Ensure patient always has a fullName
+        if (!foundPatient.fullName) {
+          foundPatient.fullName = `${foundPatient.firstName || ''} ${foundPatient.lastName || ''}`.trim() || foundPatient.username;
+        }
+        
+        setPatient(foundPatient);
+        setError(null);
+      } catch (err) {
+        setError(err.message || "Erreur lors du chargement des données du patient");
+        console.error("Error fetching patient details:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (patientId) {
+      fetchPatientDetails();
+    }
+  }, [patientId]);
+
+  const handleConsultationSubmit = async (consultationData) => {
     try {
-      const response = await fetch("http://localhost:8080/api/doctor/consultations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ patientId, ...data }),
+      setLoading(true);
+      await consultationService.addConsultation({
+        patientId,
+        ...consultationData
       });
-      if (!response.ok) throw new Error("Erreur lors de l'ajout de la consultation");
-      console.log("Consultation ajoutée avec succès");
-      alert("Consultation ajoutée avec succès !");
+      
+      // Navigate to patient record after successful submission
+      navigate(`/doctor/patient/${patientId}`, { 
+        state: { message: "Consultation ajoutée avec succès!" } 
+      });
     } catch (err) {
-      console.error(err.message);
-      alert("Erreur lors de l'ajout de la consultation. Veuillez vérifier que le backend est en cours d'exécution.");
+      setError("Erreur lors de l'ajout de la consultation");
+      console.error("Error adding consultation:", err);
+      setLoading(false);
     }
   };
 
+  if (loading && !patient) {
+    return <LoadingIndicator message="Chargement..." />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
+
   return (
-    <div className="add-consultation">
-      <h1>Ajouter une consultation pour le patient {patientId}</h1>
-      <ConsultationForm onSubmit={handleSubmit} />
+    <div className="add-consultation-container">
+      <div className="page-header">
+        <h2>Nouvelle consultation</h2>
+        <Link to={`/doctor/patient/${patientId}`} className="back-link">
+          &larr; Retour au dossier patient
+        </Link>
+      </div>
+      
+      {patient && (
+        <div className="patient-summary">
+          <h3>Patient: {patient.fullName}</h3>
+          {patient.medicalRecordNumber && (
+            <p>Dossier médical n° {patient.medicalRecordNumber}</p>
+          )}
+        </div>
+      )}
+      
+      <ConsultationForm 
+        onSubmit={handleConsultationSubmit} 
+        loading={loading}
+      />
     </div>
   );
 };

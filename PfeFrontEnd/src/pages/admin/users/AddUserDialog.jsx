@@ -1,22 +1,69 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import "./AddUserDialog.css";
 
-const AddUserDialog = ({ isOpen, onClose, onAdd }) => {
+const AddUserDialog = ({ isOpen, onClose, onAdd, userType }) => {
+  // Use form fields that match backend
   const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    email: "",
+    username: "",
     password: "",
-    specialite: "",
-    numeroIdentificationProfessionnel: "",
-    adressePratique: "",
-    numeroTelephone: "",
-    role: "",
-    nomHopital: "",
-    ville: "",
-    profileImage: "",
+    fullName: "",
+    email: "",
+    // Doctor specific
+    specialization: "",
+    licenseNumber: "",
+    hospitalAffiliation: "",
+    // Patient specific
+    dateOfBirth: "",
+    bloodGroup: "",
+    medicalRecordNumber: "",
+    walletAddress: "",
   });
+
+  const [errors, setErrors] = useState({});
+
+  // Reset form data when user type changes
+  useEffect(() => {
+    setFormData({
+      username: "",
+      password: "",
+      fullName: "",
+      email: "",
+      // Doctor specific
+      specialization: "",
+      licenseNumber: "",
+      hospitalAffiliation: "",
+      // Patient specific
+      dateOfBirth: "",
+      bloodGroup: "",
+      medicalRecordNumber: "",
+      walletAddress: "",
+    });
+    setErrors({});
+  }, [userType]);
+
+  const validateForm = () => {
+    const newErrors = {};
+    // Common validations
+    if (!formData.username) newErrors.username = "Nom d'utilisateur requis";
+    if (!formData.password) newErrors.password = "Mot de passe requis";
+    if (formData.password && formData.password.length < 6)
+      newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
+    if (!formData.email) newErrors.email = "Email requis";
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Format d'email invalide";
+
+    // Type-specific validations
+    if (userType === "doctor") {
+      if (!formData.specialization) newErrors.specialization = "Spécialité requise";
+      if (!formData.licenseNumber) newErrors.licenseNumber = "Numéro de licence requis";
+    } else if (userType === "patient") {
+      if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date de naissance requise";
+      if (!formData.medicalRecordNumber) newErrors.medicalRecordNumber = "Numéro de dossier médical requis";
+    }
+
+    return newErrors;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,39 +71,55 @@ const AddUserDialog = ({ isOpen, onClose, onAdd }) => {
       ...prev,
       [name]: value,
     }));
-  };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          profileImage: reader.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+    // Clear error when field is being edited
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onAdd(formData);
-    setFormData({
-      nom: "",
-      prenom: "",
-      email: "",
-      password: "",
-      specialite: "",
-      numeroIdentificationProfessionnel: "",
-      adressePratique: "",
-      numeroTelephone: "",
-      role: "",
-      nomHopital: "",
-      ville: "",
-      profileImage: "",
-    });
+    
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
+    // Format the data to match backend expectations
+    let userData = {};
+    
+    // Common fields for all user types
+    userData = {
+      username: formData.username,
+      password: formData.password,
+      email: formData.email,
+      fullName: formData.fullName
+    };
+    
+    // Add type-specific fields
+    if (userType === "doctor") {
+      userData = {
+        ...userData,
+        specialization: formData.specialization,
+        licenseNumber: formData.licenseNumber,
+        hospitalAffiliation: formData.hospitalAffiliation
+      };
+    } else if (userType === "patient") {
+      userData = {
+        ...userData,
+        dateOfBirth: formData.dateOfBirth,
+        bloodGroup: formData.bloodGroup,
+        medicalRecordNumber: formData.medicalRecordNumber,
+        walletAddress: formData.walletAddress || null
+      };
+    }
+    
+    onAdd(userData);
   };
 
   if (!isOpen) return null;
@@ -65,169 +128,236 @@ const AddUserDialog = ({ isOpen, onClose, onAdd }) => {
     <div className="dialog-overlay">
       <div className="dialog">
         <div className="dialog-header">
-          <h3>Ajouter un utilisateur</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <h3>
+            Ajouter un {userType === "admin" ? "administrateur" : 
+                        userType === "doctor" ? "médecin" : "patient"}
+          </h3>
+          <button className="close-btn" onClick={onClose}>
+            ×
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-container">
-            <div className="form-grid">
-              {/* Colonne gauche */}
-              <div className="form-column">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Nom</label>
-                    <input
-                      type="text"
-                      name="nom"
-                      value={formData.nom}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Prénom</label>
-                    <input
-                      type="text"
-                      name="prenom"
-                      value={formData.prenom}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+            {/* Common fields for all user types */}
+            <div className="form-section">
+              <h4>Informations générales</h4>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="username">
+                    Nom d'utilisateur <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={errors.username ? "error" : ""}
+                  />
+                  {errors.username && (
+                    <span className="error-message">{errors.username}</span>
+                  )}
                 </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Mot de passe</label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Spécialité</label>
-                    <input
-                      type="text"
-                      name="specialite"
-                      value={formData.specialite}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Numéro d'identification</label>
-                    <input
-                      type="text"
-                      name="numeroIdentificationProfessionnel"
-                      value={formData.numeroIdentificationProfessionnel}
-                      onChange={handleChange}
-                    />
-                  </div>
+                <div className="form-group">
+                  <label htmlFor="password">
+                    Mot de passe <span className="required">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={errors.password ? "error" : ""}
+                  />
+                  {errors.password && (
+                    <span className="error-message">{errors.password}</span>
+                  )}
                 </div>
               </div>
-              {/* Colonne droite */}
-              <div className="form-column">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Adresse de pratique</label>
-                    <input
-                      type="text"
-                      name="adressePratique"
-                      value={formData.adressePratique}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Numéro de téléphone</label>
-                    <input
-                      type="tel"
-                      name="numeroTelephone"
-                      value={formData.numeroTelephone}
-                      onChange={handleChange}
-                    />
-                  </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="fullName">
+                    Nom complet <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    className={errors.fullName ? "error" : ""}
+                  />
+                  {errors.fullName && (
+                    <span className="error-message">{errors.fullName}</span>
+                  )}
                 </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Rôle</label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">Sélectionner un rôle</option>
-                      <option value="admin">Admin</option>
-                      <option value="superAdmin">Super Admin</option>
-                      <option value="doctor">Docteur</option>
-                      <option value="patient">Patient</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Nom de l'hôpital</label>
-                    <input
-                      type="text"
-                      name="nomHopital"
-                      value={formData.nomHopital}
-                      onChange={handleChange}
-                    />
-                  </div>
+                <div className="form-group">
+                  <label htmlFor="email">
+                    Email <span className="required">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={errors.email ? "error" : ""}
+                  />
+                  {errors.email && (
+                    <span className="error-message">{errors.email}</span>
+                  )}
                 </div>
+              </div>
+            </div>
+            
+            {/* Doctor-specific fields */}
+            {userType === "doctor" && (
+              <div className="form-section">
+                <h4>Informations du médecin</h4>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Ville</label>
+                    <label htmlFor="specialization">
+                      Spécialité <span className="required">*</span>
+                    </label>
                     <input
                       type="text"
-                      name="ville"
-                      value={formData.ville}
+                      id="specialization"
+                      name="specialization"
+                      value={formData.specialization}
                       onChange={handleChange}
+                      className={errors.specialization ? "error" : ""}
                     />
+                    {errors.specialization && (
+                      <span className="error-message">{errors.specialization}</span>
+                    )}
                   </div>
                   <div className="form-group">
-                    <label>Photo de profil</label>
+                    <label htmlFor="licenseNumber">
+                      Numéro de licence <span className="required">*</span>
+                    </label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
+                      type="text"
+                      id="licenseNumber"
+                      name="licenseNumber"
+                      value={formData.licenseNumber}
+                      onChange={handleChange}
+                      className={errors.licenseNumber ? "error" : ""}
                     />
-                    {formData.profileImage && (
-                      <img
-                        src={formData.profileImage}
-                        alt="Prévisualisation"
-                        className="image-preview"
-                      />
+                    {errors.licenseNumber && (
+                      <span className="error-message">{errors.licenseNumber}</span>
                     )}
                   </div>
                 </div>
+                <div className="form-group">
+                  <label htmlFor="hospitalAffiliation">
+                    Affiliation hospitalière
+                  </label>
+                  <input
+                    type="text"
+                    id="hospitalAffiliation"
+                    name="hospitalAffiliation"
+                    value={formData.hospitalAffiliation}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
-            </div>
-            {/* Boutons à l'intérieur du form-container */}
-            <div className="dialog-actions">
-              <button type="button" className="cancel-btn" onClick={onClose}>
-                Annuler
-              </button>
-              <button type="submit" className="submit-btn">
-                Ajouter
-              </button>
-            </div>
+            )}
+            
+            {/* Patient-specific fields */}
+            {userType === "patient" && (
+              <div className="form-section">
+                <h4>Informations du patient</h4>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="dateOfBirth">
+                      Date de naissance <span className="required">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      className={errors.dateOfBirth ? "error" : ""}
+                    />
+                    {errors.dateOfBirth && (
+                      <span className="error-message">{errors.dateOfBirth}</span>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="bloodGroup">Groupe sanguin</label>
+                    <select
+                      id="bloodGroup"
+                      name="bloodGroup"
+                      value={formData.bloodGroup}
+                      onChange={handleChange}
+                    >
+                      <option value="">Sélectionner</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="medicalRecordNumber">
+                      Numéro de dossier médical <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="medicalRecordNumber"
+                      name="medicalRecordNumber"
+                      value={formData.medicalRecordNumber}
+                      onChange={handleChange}
+                      className={errors.medicalRecordNumber ? "error" : ""}
+                    />
+                    {errors.medicalRecordNumber && (
+                      <span className="error-message">{errors.medicalRecordNumber}</span>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="walletAddress">Adresse wallet (optionnel)</label>
+                    <input
+                      type="text"
+                      id="walletAddress"
+                      name="walletAddress"
+                      value={formData.walletAddress}
+                      onChange={handleChange}
+                      placeholder="0x..."
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="dialog-actions">
+            <button type="button" className="cancel-btn" onClick={onClose}>
+              Annuler
+            </button>
+            <button type="submit" className="submit-btn">
+              Ajouter
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+AddUserDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  userType: PropTypes.string.isRequired,
 };
 
 export default AddUserDialog;

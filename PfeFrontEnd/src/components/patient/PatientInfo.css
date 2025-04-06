@@ -1,0 +1,90 @@
+.patient-profile {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.patient-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.patient-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #3F8996;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.patient-name {
+  margin: 0 0 5px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.patient-id {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.patient-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.detail-group {
+  margin-bottom: 15px;
+}
+
+.detail-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #333;
+}
+
+.allergies {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-top: 10px;
+  border-left: 4px solid #dc3545;
+}
+
+.allergies-title {
+  font-weight: 500;
+  margin: 0 0 5px;
+  color: #dc3545;
+}
+
+.allergies-list {
+  margin: 0;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .patient-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .patient-details {
+    grid-template-columns: 1fr;
+  }
+}

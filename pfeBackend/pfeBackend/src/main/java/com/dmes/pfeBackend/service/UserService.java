@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -511,4 +512,15 @@ public class UserService {
         
         return savedPatient;
     }
+
+    public List<Doctor> findAllDoctors() {
+        // TODO Auto-generated method stub
+        return doctorRepository.findAll();
+    }
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
+    }
+
+
+
 }

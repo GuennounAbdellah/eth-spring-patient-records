@@ -1,0 +1,126 @@
+.recent-patients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.patient-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.patient-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.patient-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #3F8996;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 15px;
+}
+
+.patient-info {
+  flex: 1;
+}
+
+.patient-info h4 {
+  margin: 0;
+  color: #343a40;
+  font-size: 1rem;
+}
+
+.patient-info h4 a {
+  text-decoration: none;
+  color: #343a40;
+  transition: color 0.2s;
+}
+
+.patient-info h4 a:hover {
+  color: #3F8996;
+  text-decoration: underline;
+}
+
+.patient-details {
+  margin: 5px 0 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.patient-mrn {
+  background-color: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.patient-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.view-record-btn,
+.add-consultation-btn {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.view-record-btn {
+  background-color: #3F8996;
+  color: white;
+}
+
+.view-record-btn:hover {
+  background-color: #357282;
+}
+
+.add-consultation-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.add-consultation-btn:hover {
+  background-color: #218838;
+}
+
+.empty-recent-patients {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.empty-recent-patients p {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.empty-recent-patients small {
+  display: block;
+  color: #868e96;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}

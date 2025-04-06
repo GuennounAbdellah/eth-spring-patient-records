@@ -1,73 +1,77 @@
-
-import { useState, useEffect } from "react";
-import PatientInfo from "../../components/patient/PatientInfo";
-import MedicalHistory from "../../components/patient/MedicalHistory";
-import ConsultationHistory from "../../components/patient/ConsultationHistory";
-import PrescriptionHistory from "../../components/patient/PrescriptionHistory";
-import TestResults from "../../components/patient/TestResults";
-import BlockchainHistory from "../../components/patient/BlockchainHistory";
+import React, { useState, useEffect } from "react";
+import { patientService } from "../../services/patientService";
+import ConsultationHistory from "../../components/common/ConsultationHistory";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
+import ErrorMessage from "../../components/common/ErrorMessage";
 import "./MedicalRecord.css";
 
 const MedicalRecord = () => {
-  const [patient, setPatient] = useState(null);
-  const [medicalHistory, setMedicalHistory] = useState(null);
-  const [consultations, setConsultations] = useState([]);
-  const [prescriptions, setPrescriptions] = useState([]);
-  const [testResults, setTestResults] = useState([]);
-  const [blockchainHistory, setBlockchainHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [consultations, setConsultations] = useState([]);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMedicalData = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/patient/medical-record");
-        if (!response.ok) throw new Error("Erreur lors de la récupération du dossier médical");
-        const data = await response.json();
-
-        setPatient({
-          nom: data.nom,
-          prenom: data.prenom,
-          dateOfBirth: data.dateOfBirth,
-          sexe: data.sexe,
-          bloodGroup: data.bloodGroup,
-          allergies: data.allergies,
-        });
-
-        setMedicalHistory({
-          pathologies: data.pathologies,
-          vaccinations: data.vaccinations,
-          surgeries: data.surgeries,
-        });
-
-        setConsultations(data.consultations || []);
-        setPrescriptions(data.prescriptions || []);
-        setTestResults(data.testResults || []);
-        setBlockchainHistory(data.blockchainHistory || []);
-
-        setLoading(false);
+        setLoading(true);
+        
+        // Fetch patient consultations and profile in parallel
+        const [consultationsData, profileData] = await Promise.all([
+          patientService.getConsultations(),
+          patientService.getProfile()
+        ]);
+        
+        setConsultations(consultationsData || []);
+        setProfile(profileData);
+        setError(null);
       } catch (err) {
-        setError("Impossible de se connecter au serveur. Veuillez vérifier que le backend est en cours d'exécution sur http://localhost:8080.");
+        console.error("Error fetching medical record:", err);
+        setError("Impossible de charger votre dossier médical");
+      } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
+    
+    fetchMedicalData();
   }, []);
 
-  if (loading) return <div>Chargement...</div>;
+  if (loading && !profile) {
+    return <LoadingIndicator message="Chargement du dossier médical..." />;
+  }
 
   return (
-    <div className="medical-record">
-      <h1>Dossier médical</h1>
-      {error && <div className="error-message">{error}</div>}
-      <div className="medical-record-content">
-        <PatientInfo patient={patient} />
-        <MedicalHistory history={medicalHistory} />
-        <ConsultationHistory consultations={consultations} />
-        <PrescriptionHistory prescriptions={prescriptions} />
-        <TestResults results={testResults} />
-        <BlockchainHistory history={blockchainHistory} />
+    <div className="medical-record-container">
+      <h1>Mon Dossier Médical</h1>
+      
+      {error && <ErrorMessage message={error} />}
+      
+      {profile && (
+        <div className="medical-info-summary">
+          <div className="medical-card">
+            <h3>Informations médicales</h3>
+            <div className="info-row">
+              <span className="info-label">Groupe sanguin:</span>
+              <span className="info-value">{profile.bloodGroup || "Non renseigné"}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">Allergies:</span>
+              <span className="info-value">{profile.allergies || "Aucune allergie connue"}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">Conditions chroniques:</span>
+              <span className="info-value">{profile.chronicConditions || "Aucune condition connue"}</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="consultations-section">
+        <h2>Historique des consultations</h2>
+        <ConsultationHistory 
+          consultations={consultations} 
+          role="patient"
+        />
       </div>
     </div>
   );

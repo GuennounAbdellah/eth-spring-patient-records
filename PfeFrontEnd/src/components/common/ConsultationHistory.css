@@ -1,0 +1,335 @@
+.consultation-history {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  margin-top: 15px;
+  flex-direction: column;
+}
+
+.history-title {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-size: 1.3rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.75rem;
+}
+
+.consultations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.consultation-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #eee;
+  padding: 1rem;
+  position: relative;
+}
+
+.consultation-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12);
+}
+
+.consultation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(45deg, #3F8996, #64a7b3);
+  color: white;
+}
+
+.consultation-date {
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #333;
+}
+
+.consultation-doctor {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.consultation-body {
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.consultation-text {
+  margin: 0;
+}
+
+.structured-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #2c3e50;
+  margin-right: 0.5rem;
+}
+
+.detail-value {
+  color: #34495e;
+}
+
+.consultation-metadata {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.consultation-metadata h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
+.metadata-item {
+  margin-bottom: 0.25rem;
+}
+
+.metadata-key {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.blockchain-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.blockchain-badge::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #2ecc71;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+}
+
+.loading-container,
+.error-container,
+.empty-consultations {
+  padding: 2rem;
+  text-align: center;
+  color: #7f8c8d;
+}
+
+.error-container {
+  color: #e74c3c;
+}
+
+.consultation-item {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.consultation-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.consultation-title {
+  font-weight: 500;
+  color: #343a40;
+}
+
+.consultation-toggle {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.consultation-details {
+  padding: 15px;
+  border-top: 1px solid #dee2e6;
+  margin-top: 1rem;
+}
+
+.consultation-section {
+  margin-bottom: 20px;
+}
+
+.consultation-section h4 {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.consultation-section p {
+  margin: 0;
+  color: #343a40;
+  line-height: 1.5;
+}
+
+.consultation-actions {
+  margin: 20px 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.delete-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+.delete-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.consultation-meta {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dotted #dee2e6;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.blockchain-hash {
+  font-family: monospace;
+  background-color: #f1f3f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.empty-consultations {
+  grid-column: 1 / -1;
+  padding: 2rem;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  font-style: italic;
+  color: #666;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.consultation-field {
+  margin-bottom: 15px;
+}
+
+.consultation-field:last-child {
+  margin-bottom: 0;
+}
+
+.consultation-field h4 {
+  margin: 0 0 5px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.consultation-field p {
+  margin: 0;
+  color: #333;
+  white-space: pre-line;
+}
+
+.no-consultations {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.consultation-diagnosis,
+.consultation-symptoms,
+.consultation-treatment,
+.consultation-notes,
+.consultation-metadata {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.blockchain-reference {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #ddd;
+}
+
+.hash {
+  font-family: monospace;
+  font-size: 0.85rem;
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: block;
+  margin-top: 0.4rem;
+  word-break: break-all;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .consultation-history {
+    grid-template-columns: 1fr;
+  }
+}

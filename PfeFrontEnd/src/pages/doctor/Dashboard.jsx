@@ -1,76 +1,104 @@
-
-import { useState, useEffect } from "react";
-import StatsCard from "../../components/doctor/StatsCard";
-import RecentPatients from "../../components/doctor/RecentPatients";
-import AppointmentCalendar from "../../components/doctor/AppointmentCalendar";
+import React, { useState, useEffect } from "react";
+import { dashboardService } from "../../services/dashboardService";
+import StatsCard from "../../components/common/StatsCard";
+import { MdPeople, MdLocalHospital, MdHistory } from "react-icons/md";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
+import ErrorMessage from "../../components/common/ErrorMessage";
 import "./Dashboard.css";
 
-const Dashboard = () => {
-  const [stats, setStats] = useState([]);
-  const [recentPatients, setRecentPatients] = useState([]);
-  const [appointments, setAppointments] = useState([]);
+const DoctorDashboard = () => {
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    recentConsultations: 0,
+    upcomingConsultations: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const statsResponse = await fetch("http://localhost:8080/api/doctor/stats");
-        if (!statsResponse.ok) throw new Error("Erreur lors de la récupération des statistiques");
-        const statsData = await statsResponse.json();
-        setStats([
-          { title: "Patients suivis", value: statsData.patientsCount, icon: "👥" },
-          { title: "Consultations récentes", value: statsData.recentConsultations, icon: "📅" },
-          { title: "Dossiers modifiés", value: statsData.modifiedRecords, icon: "📝" },
-        ]);
-
-        const patientsResponse = await fetch("http://localhost:8080/api/doctor/recent-patients");
-        if (!patientsResponse.ok) throw new Error("Erreur lors de la récupération des patients");
-        const patientsData = await patientsResponse.json();
-        setRecentPatients(patientsData);
-
-        const appointmentsResponse = await fetch("http://localhost:8080/api/doctor/appointments");
-        if (!appointmentsResponse.ok) throw new Error("Erreur lors de la récupération des rendez-vous");
-        const appointmentsData = await appointmentsResponse.json();
-        setAppointments(appointmentsData);
-
-        setLoading(false);
+        setLoading(true);
+        const data = await dashboardService.getDoctorDashboardData();
+        
+        setStats({
+          totalPatients: data.totalPatients || 0,
+          recentConsultations: data.recentConsultations || 0,
+          upcomingConsultations: data.upcomingConsultations || 0,
+        });
+        
+        setError(null);
       } catch (err) {
-        setError("Impossible de se connecter au serveur. Veuillez vérifier que le backend est en cours d'exécution sur http://localhost:8080.");
+        console.error("Error fetching doctor dashboard data:", err);
+        setError("Impossible de charger les données du tableau de bord");
+        
+        // Set default stats to avoid null references
+        setStats({
+          totalPatients: 0,
+          recentConsultations: 0,
+          upcomingConsultations: 0,
+        });
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, []);
 
-  if (loading) return <div>Chargement...</div>;
+  if (loading) {
+    return <LoadingIndicator message="Chargement du tableau de bord..." />;
+  }
 
   return (
-    <div className="dashboard">
-      <h1>Tableau de bord</h1>
-      {error && <div className="error-message">{error}</div>}
+    <div className="doctor-dashboard">
+      <h1>Tableau de Bord Médecin</h1>
+      
+      {error && <ErrorMessage message={error} />}
+      
       <div className="stats-grid">
-        {stats.length > 0 ? (
-          stats.map((stat, index) => (
-            <StatsCard key={index} title={stat.title} value={stat.value} icon={stat.icon} />
-          ))
-        ) : (
-          <div className="placeholder">
-            <p>Aucune statistique disponible pour le moment.</p>
-          </div>
-        )}
+        <StatsCard 
+          title="Patients" 
+          value={stats.totalPatients} 
+          icon={<MdPeople size={24} />} 
+          color="primary"
+        />
+        <StatsCard 
+          title="Consultations récentes" 
+          value={stats.recentConsultations} 
+          icon={<MdHistory size={24} />} 
+          color="info"
+        />
+        <StatsCard 
+          title="Consultations à venir" 
+          value={stats.upcomingConsultations} 
+          icon={<MdLocalHospital size={24} />} 
+          color="success"
+        />
       </div>
-      <div className="dashboard-content">
-        <div>
-          <RecentPatients patients={recentPatients} />
-        </div>
-        <div>
-          <AppointmentCalendar appointments={appointments} />
-        </div>
+      
+      <div className="dashboard-sections">
+        <section className="recent-activity">
+          <h2>Activités Récentes</h2>
+          <div className="activity-list">
+            {/* Activity items could go here */}
+            <p className="empty-state">Aucune activité récente à afficher.</p>
+          </div>
+        </section>
+        
+        <section className="doctor-notes">
+          <h2>Notes Personnelles</h2>
+          <div className="notes-container">
+            <textarea 
+              className="doctor-notes-input"
+              placeholder="Écrivez vos notes ici..."
+            />
+            <button className="save-notes-btn">Enregistrer</button>
+          </div>
+        </section>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default DoctorDashboard;

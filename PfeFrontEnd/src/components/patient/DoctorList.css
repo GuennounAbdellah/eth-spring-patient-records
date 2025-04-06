@@ -1,0 +1,59 @@
+.doctor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.doctor-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: white;
+}
+
+.doctor-info {
+  flex: 1;
+}
+
+.doctor-info h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #333;
+}
+
+.doctor-speciality {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #666;
+}
+
+.doctor-hospital {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+}
+
+.btn-grant-access {
+  padding: 8px 16px;
+  background-color: #3F8996;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-grant-access:hover {
+  background-color: #347885;
+}
+
+.no-doctors-message {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  border: 1px dashed #ddd;
+  border-radius: 8px;
+}

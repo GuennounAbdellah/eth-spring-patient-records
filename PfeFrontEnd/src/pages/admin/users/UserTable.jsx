@@ -1,182 +1,194 @@
-
-import { useState, useEffect } from "react";
-import AddUserDialog from "./AddUserDialog";
-import EditUserDialog from "./EditUserDialog";
-import "./UserTable.css";
+import React, { useState, useEffect } from 'react';
+import { userService } from '../../../services/userService';
+import LoadingIndicator from '../../../components/common/LoadingIndicator';
+import ErrorMessage from '../../../components/common/ErrorMessage';
+import './UserTable.css';
 
 const UserTable = () => {
   const [users, setUsers] = useState([]);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(0); // Page actuelle (commence à 0)
-  const [totalPages, setTotalPages] = useState(0); // Nombre total de pages
-  const usersPerPage = 10; // Nombre d'utilisateurs par page
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // Ajouter les paramètres de pagination à la requête
-        const response = await fetch(
-          `http://localhost:8080/api/users?page=${currentPage}&size=${usersPerPage}`
-        );
-        const data = await response.json();
-        setUsers(data.content); // Liste des utilisateurs pour la page actuelle
-        setTotalPages(data.totalPages); // Nombre total de pages
-      } catch (error) {
-        console.error("Erreur lors de la récupération des utilisateurs", error);
-      }
-    };
     fetchUsers();
-  }, [currentPage]); // Recharger les utilisateurs lorsque la page change
+  }, []);
 
-  const handleAddUser = async (newUser) => {
+  const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-      const addedUser = await response.json();
-      setUsers([...users, addedUser]);
-      setIsAddDialogOpen(false);
-    } catch (error) {
-      console.error("Erreur lors de l'ajout de l'utilisateur", error);
+      setLoading(true);
+      // Using getAllUsers instead of getUsers for clarity
+      const data = await userService.getAllUsers();
+      setUsers(data || []);
+      setFilteredUsers(data || []);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      setError(`Failed to fetch users: ${err.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEditUser = async (updatedUser) => {
+  // Apply filtering when search term, role filter, or status filter changes
+  useEffect(() => {
+    if (!users.length) return;
+
+    let result = [...users];
+
+    // Apply search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      result = result.filter(user => 
+        user.username.toLowerCase().includes(search) ||
+        (user.fullName && user.fullName.toLowerCase().includes(search))
+      );
+    }
+
+    // Apply role filter
+    if (roleFilter !== 'ALL') {
+      result = result.filter(user => user.role === roleFilter);
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'ALL') {
+      const isActive = statusFilter === 'ACTIVE';
+      result = result.filter(user => user.active === isActive);
+    }
+
+    setFilteredUsers(result);
+  }, [users, searchTerm, roleFilter, statusFilter]);
+
+  const handleStatusChange = async (userId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/users/${updatedUser.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedUser),
-      });
-      const editedUser = await response.json();
-      setUsers(users.map((user) => (user.id === editedUser.id ? editedUser : user)));
-      setIsEditDialogOpen(false);
-    } catch (error) {
-      console.error("Erreur lors de la modification de l'utilisateur", error);
+      setLoading(true);
+      await userService.updateUserStatus(userId, newStatus);
+      
+      // Update local state to reflect the change
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, active: newStatus } : user
+      ));
+      
+      // Success message could be shown here
+    } catch (err) {
+      setError(`Failed to update user status: ${err.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteUser = async (id) => {
-    try {
-      await fetch(`http://localhost:8080/api/users/${id}`, { method: "DELETE" });
-      setUsers(users.filter((user) => user.id !== id));
-    } catch (error) {
-      console.error("Erreur lors de la suppression de l'utilisateur", error);
-    }
-  };
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.nom.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter ? user.role === roleFilter : true;
-    return matchesSearch && matchesRole;
-  });
+  if (loading && !users.length) {
+    return <LoadingIndicator message="Chargement des utilisateurs..." />;
+  }
 
   return (
-    <div className="table-container">
-      <div className="header">
-        <h2>Gestion des utilisateurs</h2>
-        <button className="add-btn" onClick={() => setIsAddDialogOpen(true)}>
-          Ajouter un utilisateur
-        </button>
+    <div className="user-manager-container">
+      <h2>Gestion des Utilisateurs</h2>
+      
+      {error && <ErrorMessage message={error} />}
+      
+      <div className="filter-controls">
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Rechercher un utilisateur..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="filter-group">
+          <select 
+            value={roleFilter} 
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <option value="ALL">Tous les rôles</option>
+            <option value="PATIENT">Patients</option>
+            <option value="DOCTOR">Médecins</option>
+            <option value="ADMIN">Administrateurs</option>
+          </select>
+          
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="ALL">Tous les statuts</option>
+            <option value="ACTIVE">Actif</option>
+            <option value="INACTIVE">Inactif</option>
+          </select>
+        </div>
       </div>
-
-      <div className="filters">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Rechercher par nom..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="role-filter"
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-        >
-          <option value="">Tous les rôles</option>
-          <option value="admin">Admin</option>
-          <option value="superAdmin">Super Admin</option>
-          <option value="doctor">Docteur</option>
-          <option value="patient">Patient</option>
-        </select>
-      </div>
-
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Prénom</th>
-            <th>Email</th>
-            <th>Rôle</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map((user) => (
-            <tr key={user.id}>
-              <td>{user.nom}</td>
-              <td>{user.prenom}</td>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
-              <td>
-                <button
-                  className="edit-btn"
-                  onClick={() => {
-                    setSelectedUser(user);
-                    setIsEditDialogOpen(true);
-                  }}
-                >
-                  Modifier
-                </button>
-                <button className="delete-btn" onClick={() => handleDeleteUser(user.id)}>
-                  Supprimer
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Ajout des boutons de pagination */}
-      <div className="pagination">
-        <button
-          disabled={currentPage === 0}
-          onClick={() => setCurrentPage(currentPage - 1)}
-          className="pagination-btn"
-        >
-          Précédent
-        </button>
-        <span>
-          Page {currentPage + 1} sur {totalPages}
-        </span>
-        <button
-          disabled={currentPage === totalPages - 1}
-          onClick={() => setCurrentPage(currentPage + 1)}
-          className="pagination-btn"
-        >
-          Suivant
-        </button>
-      </div>
-
-      <AddUserDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        onAdd={handleAddUser}
-      />
-      <EditUserDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onEdit={handleEditUser}
-        user={selectedUser}
-      />
+      
+      {filteredUsers.length > 0 ? (
+        <div className="users-table-wrapper">
+          <table className="users-table">
+            <thead>
+              <tr>
+                <th>Nom d'utilisateur</th>
+                <th>Rôle</th>
+                <th>Adresse Wallet</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className={!user.active ? 'inactive-user' : ''}>
+                  <td>{user.username}</td>
+                  <td>{formatRole(user.role)}</td>
+                  <td className="wallet-address">
+                    {user.walletAddress 
+                      ? `${user.walletAddress.substring(0, 6)}...${user.walletAddress.substring(user.walletAddress.length - 4)}`
+                      : 'Non définie'}
+                  </td>
+                  <td>
+                    <span className={`status-badge ${user.active ? 'active' : 'inactive'}`}>
+                      {user.active ? 'Actif' : 'Inactif'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button 
+                        onClick={() => handleStatusChange(user.id, !user.active)}
+                        className={user.active ? 'deactivate-btn' : 'activate-btn'}
+                      >
+                        {user.active ? 'Désactiver' : 'Activer'}
+                      </button>
+                      <button 
+                        onClick={() => {/* View details functionality */}}
+                        className="view-btn"
+                      >
+                        Détails
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="no-users-found">
+          {searchTerm || roleFilter !== 'ALL' || statusFilter !== 'ALL'
+            ? 'Aucun utilisateur ne correspond aux critères de recherche.'
+            : 'Aucun utilisateur trouvé dans le système.'}
+        </div>
+      )}
     </div>
   );
+};
+
+// Helper function to format role for display
+const formatRole = (role) => {
+  switch (role) {
+    case 'PATIENT': return 'Patient';
+    case 'DOCTOR': return 'Médecin';
+    case 'ADMIN': return 'Administrateur';
+    default: return role;
+  }
 };
 
 export default UserTable;

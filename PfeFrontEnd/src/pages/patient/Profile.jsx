@@ -1,155 +1,358 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { patientService } from "../../services/patientService";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
+import ErrorMessage from "../../components/common/ErrorMessage";
+import SuccessMessage from "../../components/common/SuccessMessage";
 import "./Profile.css";
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("personal");
   const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    email: "",
-    telephone: "",
-    adresse: "",
+    username: "",
+    walletAddress: "",
+    dateOfBirth: "",
+    bloodGroup: "",
+    allergies: "",
+    chronicConditions: "",
+    emergencyContact: ""
   });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("http://localhost:8080/api/patient/profile");
-        if (!response.ok) throw new Error("Erreur lors de la récupération du profil");
-        const data = await response.json();
-        setProfile(data);
-        setFormData({
-          nom: data.nom,
-          prenom: data.prenom,
-          email: data.email,
-          telephone: data.telephone,
-          adresse: data.adresse,
-        });
-        setLoading(false);
-      } catch (err) {
-        setError("Impossible de se connecter au serveur. Veuillez vérifier que le backend est en cours d'exécution sur http://localhost:8080.");
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
 
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await patientService.getProfile();
+      
+      // Convert date string to date input format if needed
+      let dateOfBirth = data.dateOfBirth;
+      if (dateOfBirth && !dateOfBirth.includes('-')) {
+        const date = new Date(dateOfBirth);
+        dateOfBirth = date.toISOString().split('T')[0];
+      }
+      
+      setProfile({
+        ...data,
+        dateOfBirth
+      });
+      
+      setFormData({
+        username: data.username || "",
+        walletAddress: data.walletAddress || "",
+        dateOfBirth: dateOfBirth || "",
+        bloodGroup: data.bloodGroup || "",
+        allergies: data.allergies || "",
+        chronicConditions: data.chronicConditions || "",
+        emergencyContact: data.emergencyContact || ""
+      });
+      
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError("Impossible de récupérer les informations du profil");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ 
+      ...formData, 
+      [e.target.name]: e.target.value 
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8080/api/patient/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error("Erreur lors de la mise à jour du profil");
-      setProfile(formData);
+      setLoading(true);
+      
+      // Update only the fields from the active tab
+      const updateData = {
+        ...(activeTab === 'personal' ? {
+          username: formData.username,
+          walletAddress: formData.walletAddress
+        } : {
+          dateOfBirth: formData.dateOfBirth,
+          bloodGroup: formData.bloodGroup,
+          allergies: formData.allergies,
+          chronicConditions: formData.chronicConditions,
+          emergencyContact: formData.emergencyContact
+        })
+      };
+      
+      await patientService.updateProfile(updateData);
+      
+      // Refresh profile data
+      await fetchProfile();
+      
       setIsEditing(false);
-      alert("Profil mis à jour avec succès !");
+      setSuccess("Profil mis à jour avec succès");
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
     } catch (err) {
-      console.error(err.message);
-      alert("Erreur lors de la mise à jour du profil. Veuillez vérifier que le backend est en cours d'exécution.");
+      console.error("Error updating profile:", err);
+      setError("Erreur lors de la mise à jour du profil");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    setFormData({
-      nom: profile.nom,
-      prenom: profile.prenom,
-      email: profile.email,
-      telephone: profile.telephone,
-      adresse: profile.adresse,
-    });
+    // Reset form data to current profile values
+    if (profile) {
+      setFormData({
+        username: profile.username || "",
+        walletAddress: profile.walletAddress || "",
+        dateOfBirth: profile.dateOfBirth || "",
+        bloodGroup: profile.bloodGroup || "",
+        allergies: profile.allergies || "",
+        chronicConditions: profile.chronicConditions || "",
+        emergencyContact: profile.emergencyContact || ""
+      });
+    }
     setIsEditing(false);
   };
 
-  if (loading) return <div>Chargement...</div>;
+  if (loading && !profile) {
+    return <LoadingIndicator message="Chargement du profil..." />;
+  }
 
   return (
-    <div className="profile">
-      <h1>Profil</h1>
-      {error && <div className="error-message">{error}</div>}
+    <div className="profile-page">
+      <h1>Mon Profil</h1>
+      
+      {error && <ErrorMessage message={error} />}
+      {success && <SuccessMessage message={success} />}
+      
+      <div className="profile-tabs">
+        <button 
+          className={`tab ${activeTab === 'personal' ? 'active' : ''}`}
+          onClick={() => setActiveTab('personal')}
+        >
+          Informations personnelles
+        </button>
+        <button 
+          className={`tab ${activeTab === 'medical' ? 'active' : ''}`}
+          onClick={() => setActiveTab('medical')}
+        >
+          Informations médicales
+        </button>
+      </div>
+      
       {profile && !isEditing ? (
         <div className="profile-details">
-          <h3>Informations personnelles</h3>
-          <p>Nom : {profile.nom}</p>
-          <p>Prénom : {profile.prenom}</p>
-          <p>Email : {profile.email}</p>
-          <p>Téléphone : {profile.telephone}</p>
-          <p>Adresse : {profile.adresse}</p>
-          <button onClick={() => setIsEditing(true)} className="edit-button">
-            Modifier
-          </button>
+          {activeTab === 'personal' ? (
+            <div className="profile-card">
+              <div className="profile-header">
+                <h3>Informations personnelles</h3>
+                <button 
+                  onClick={() => setIsEditing(true)} 
+                  className="edit-button"
+                >
+                  Modifier
+                </button>
+              </div>
+              
+              <div className="profile-info">
+                <div className="info-group">
+                  <span className="info-label">Nom d'utilisateur:</span>
+                  <span className="info-value">{profile.username}</span>
+                </div>
+                
+                <div className="info-group">
+                  <span className="info-label">Adresse de portefeuille:</span>
+                  <span className="info-value wallet-address">
+                    {profile.walletAddress || "Non configurée"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="profile-card">
+              <div className="profile-header">
+                <h3>Informations médicales</h3>
+                <button 
+                  onClick={() => setIsEditing(true)} 
+                  className="edit-button"
+                >
+                  Modifier
+                </button>
+              </div>
+              
+              <div className="profile-info">
+                <div className="info-group">
+                  <span className="info-label">Date de naissance:</span>
+                  <span className="info-value">
+                    {profile.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString('fr-FR') : "Non renseignée"}
+                  </span>
+                </div>
+                
+                <div className="info-group">
+                  <span className="info-label">Groupe sanguin:</span>
+                  <span className="info-value">{profile.bloodGroup || "Non renseigné"}</span>
+                </div>
+                
+                <div className="info-group">
+                  <span className="info-label">Allergies:</span>
+                  <span className="info-value">{profile.allergies || "Aucune allergie connue"}</span>
+                </div>
+                
+                <div className="info-group">
+                  <span className="info-label">Maladies chroniques:</span>
+                  <span className="info-value">{profile.chronicConditions || "Aucune maladie chronique connue"}</span>
+                </div>
+                
+                <div className="info-group">
+                  <span className="info-label">Contact d'urgence:</span>
+                  <span className="info-value">{profile.emergencyContact || "Non renseigné"}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="profile-form">
-          <h3>Modifier le profil</h3>
-          <div className="form-group">
-            <label>Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Téléphone</label>
-            <input
-              type="tel"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Adresse</label>
-            <textarea
-              name="adresse"
-              value={formData.adresse}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <h3>Modifier {activeTab === 'personal' ? 'les informations personnelles' : 'les informations médicales'}</h3>
+          
+          {activeTab === 'personal' ? (
+            <>
+              <div className="form-group">
+                <label htmlFor="username">Nom d'utilisateur</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="walletAddress">Adresse de portefeuille</label>
+                <input
+                  type="text"
+                  id="walletAddress"
+                  name="walletAddress"
+                  value={formData.walletAddress}
+                  onChange={handleChange}
+                  placeholder="0x..."
+                />
+                <p className="field-help">Adresse Ethereum pour les interactions blockchain</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="form-group">
+                <label htmlFor="dateOfBirth">Date de naissance</label>
+                <input
+                  type="date"
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  value={formData.dateOfBirth ? formData.dateOfBirth.substring(0, 10) : ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="bloodGroup">Groupe sanguin</label>
+                <select
+                  id="bloodGroup"
+                  name="bloodGroup"
+                  value={formData.bloodGroup || ""}
+                  onChange={handleChange}
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="allergies">Allergies</label>
+                <textarea
+                  id="allergies"
+                  name="allergies"
+                  value={formData.allergies || ""}
+                  onChange={handleChange}
+                  rows="3"
+                  placeholder="Listez vos allergies (médicaments, aliments, etc.)"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="chronicConditions">Maladies chroniques</label>
+                <textarea
+                  id="chronicConditions"
+                  name="chronicConditions"
+                  value={formData.chronicConditions || ""}
+                  onChange={handleChange}
+                  rows="3"
+                  placeholder="Listez vos maladies chroniques"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="emergencyContact">Contact d'urgence</label>
+                <input
+                  type="text"
+                  id="emergencyContact"
+                  name="emergencyContact"
+                  value={formData.emergencyContact || ""}
+                  onChange={handleChange}
+                  placeholder="Nom et numéro de téléphone"
+                />
+              </div>
+            </>
+          )}
+          
           <div className="form-actions">
-            <button type="submit" className="save-button">Enregistrer</button>
-            <button type="button" onClick={handleCancel} className="cancel-button">Annuler</button>
+            <button 
+              type="submit" 
+              className="btn-submit"
+              disabled={loading}
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
+            <button 
+              type="button" 
+              onClick={handleCancel} 
+              className="btn-cancel"
+              disabled={loading}
+            >
+              Annuler
+            </button>
           </div>
         </form>
       )}
+      
+      <div className="password-section">
+        <h3>Sécurité</h3>
+        <button 
+          onClick={() => window.location.href = '/patient/change-password'} 
+          className="btn-secondary"
+        >
+          Changer le mot de passe
+        </button>
+      </div>
     </div>
   );
 };

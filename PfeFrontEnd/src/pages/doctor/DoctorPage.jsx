@@ -1,38 +1,41 @@
-import { Outlet, Link } from "react-router-dom";
-import "./DoctorPage.css";
-import logo from "../../assets/images/LOGO.png"; // Logo
-import Footer from "../../components/layout/Footer"; // Footer
+import React, { useEffect, useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import NavBar from '../../components/layout/NavBar';
+import Footer from '../../components/layout/Footer';
+import LoadingIndicator from '../../components/common/LoadingIndicator';
+import './DoctorPage.css';
 
 const DoctorPage = () => {
-  return (
-    <div className="doctor-container">
-      <div className="sidebar">
-        <div className="logo-container">
-          <img src={logo} alt="Logo" className="sidebar-logo" />
-        </div>
-        <h2>Espace Docteur</h2>
-        <ul>
-          <li className="nav-item">
-            <Link to="/doctor/dashboard">Tableau de bord</Link>
-          </li>
-          <li className="nav-item">
-            <Link to="/doctor/patients">Patients</Link>
-          </li>
-          <li className="nav-item">
-            <Link to="/doctor/appointments">Rendez-vous</Link>
-          </li>
-          <li className="nav-item">
-            <Link to="/doctor/profile">Profil</Link>
-          </li>
-          <li className="logout-btn">Déconnexion</li>
-        </ul>
-      </div>
-      
-      <div className="content">
-        <Outlet />
-      </div>
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const [pageLoading, setPageLoading] = useState(true);
 
-    
+  useEffect(() => {
+    // Check if the user is authenticated and has the doctor role
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        navigate('/login', { replace: true });
+      } else if (user && (!user.role || (user.role !== 'DOCTOR' && user.role !== 'ROLE_DOCTOR'))) {
+        // Redirect to appropriate dashboard or to login if not a doctor
+        navigate('/', { replace: true });
+      } else {
+        setPageLoading(false);
+      }
+    }
+  }, [isAuthenticated, user, isLoading, navigate]);
+
+  if (isLoading || pageLoading) {
+    return <LoadingIndicator message="Chargement..." />;
+  }
+
+  return (
+    <div className="doctor-layout">
+      <NavBar userRole="doctor" />
+      <main className="doctor-content">
+        <Outlet />
+        <Footer />
+      </main>
     </div>
   );
 };
