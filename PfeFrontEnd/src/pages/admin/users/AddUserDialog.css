@@ -1,4 +1,3 @@
-
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f7f6;
@@ -11,13 +10,30 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Fond sombre pour accentuer l'effet popup */
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
+}
+
+.dialog-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* 📌 Conteneur principal (carte flottante) */
@@ -36,26 +52,28 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
-    border-bottom: 2px solid #ddd;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
 }
 
-.dialog-header h3 {
-    font-size: 15px;
-    color: #333;
+.dialog-header h2 {
     margin: 0;
+    color: #333;
+    font-size: 1.5rem;
 }
 
-.close-btn {
+.close-dialog-btn {
     background: none;
     border: none;
-    font-size: 16px;
+    font-size: 1.5rem;
     cursor: pointer;
-    color: #888;
+    color: #777;
+    transition: color 0.2s;
 }
 
-.close-btn:hover {
-    color: red;
+.close-dialog-btn:hover {
+    color: #333;
 }
 
 /* 📌 Conteneur qui regroupe tous les champs avec un fond commun */
@@ -68,10 +86,10 @@ body {
 }
 
 /* 📌 Disposition horizontale du formulaire */
-.form-grid {
+.dialog-form {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Deux colonnes */
-    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
 /* 📌 Colonne */
@@ -89,34 +107,46 @@ body {
 
 /* 📌 Champ de formulaire */
 .form-group {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+    margin-bottom: 1rem;
+}
+
+.form-group-full {
+    grid-column: 1 / -1;
 }
 
 .form-group label {
-    font-size: 12px;
-    font-weight: bold;
-    margin-bottom: 3px;
-    color: #444;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
 }
 
 .form-group input,
 .form-group select {
-    font-size: 12px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
     width: 100%;
-    box-sizing: border-box;
-    background-color: white;
-    outline: none;
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
 }
 
-/* 📌 Ajout d'une bordure bleue au focus */
 .form-group input:focus,
 .form-group select:focus {
-    border: 2px solid #1976d2;
+    border-color: #3F8996;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(63, 137, 150, 0.2);
+}
+
+.field-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+}
+
+.field-help {
+    color: #666;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
 }
 
 /* 📌 Image de prévisualisation */
@@ -130,39 +160,40 @@ body {
 }
 
 /* 📌 Boutons (maintenant en dehors du form-container) */
-.dialog-actions {
+.form-actions {
+    grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    padding: 0 14px 14px 14px; /* Padding pour aligner avec le form-container */
+    margin-top: 1rem;
+    gap: 0.5rem;
 }
 
-.submit-btn,
-.cancel-btn {
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 6px;
+.cancel-button {
+    padding: 0.6rem 1.2rem;
+    background-color: #f0f0f0;
+    color: #333;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
-    transition: 0.3s;
+    font-weight: 500;
 }
 
-.submit-btn {
-    background-color: #1976d2;
+.submit-button {
+    padding: 0.6rem 1.2rem;
+    background-color: #3F8996;
     color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
 }
 
-.submit-btn:hover {
-    background-color: #1565c0;
+.cancel-button:hover {
+    background-color: #e0e0e0;
 }
 
-.cancel-btn {
-    background-color: #f44336;
-    color: white;
-}
-
-.cancel-btn:hover {
-    background-color: #d32f2f;
+.submit-button:hover {
+    background-color: #357282;
 }
 
 /* 📌 Responsive : Une seule colonne sur petits écrans */
@@ -177,5 +208,16 @@ body {
 
     .dialog {
         width: 90%;
+    }
+}
+
+@media (max-width: 600px) {
+    .dialog-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .dialog-content {
+        padding: 1.5rem;
+        width: 95%;
     }
 }

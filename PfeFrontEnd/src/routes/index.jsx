@@ -6,9 +6,8 @@ import NotFound from '../pages/NotFound';
 // Admin
 import AdminPage from "../pages/admin/AdminPage";
 import AdminDashboard from "../pages/admin/dashboard/Dashboard";
-import UsersManager from "../pages/admin/users/UserTable";
-import AdminProfile from "../pages/admin/profile/ProfilePage"; // Fixed path
-import AuditPage from "../pages/admin/audit/AuditPage"; // Added missing import
+import AdminProfile from "../pages/admin/profile/ProfilePage"; 
+import AuditPage from "../pages/admin/audit/AuditPage"; 
 
 // Doctor
 import DoctorPage from "../pages/doctor/DoctorPage"; 
@@ -33,6 +32,9 @@ import RegisterPage from "../pages/Home/HomePage";
 import LandingPage from "../pages/Home/HomePage";
 import ErrorPage from "../pages/NotFound";
 
+// Import UsersManager only once
+import UsersManager from "../pages/admin/users/UsersManager";
+
 // Auth components
 const AuthRequired = ({ children }) => children;
 const RoleRequired = ({ children }) => children;
@@ -40,7 +42,7 @@ const RoleRequired = ({ children }) => children;
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
+    element: <LoginPage />,
     errorElement: <ErrorPage />,
   },
   {
@@ -79,7 +81,7 @@ const router = createBrowserRouter([
       },
       {
         path: "",
-        element: <PatientDashboard />,
+        element: <LoginPage />,
       },
     ],
   },
@@ -142,7 +144,7 @@ const router = createBrowserRouter([
         element: <AdminProfile />,
       },
       {
-        path: "audit", // Added audit route
+        path: "audit", 
         element: <AuditPage />,
       },
       {

@@ -8,6 +8,7 @@ public class ProfileResponse {
     // Common fields for all users
     private String userId;
     private String username;
+    private String email;
     private String role;
     private String walletAddress;
     private boolean active;

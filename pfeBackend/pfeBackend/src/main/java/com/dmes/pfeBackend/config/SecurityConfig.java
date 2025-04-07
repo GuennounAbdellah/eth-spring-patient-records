@@ -60,14 +60,18 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/setup/**").permitAll()
-                .requestMatchers("/api/permissions/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_ADMIN")
+                // Allow all authenticated users to check permissions
+                .requestMatchers("/api/permissions/check").authenticated()
+                // Modify this line to allow doctors to access permissions endpoint
+                .requestMatchers("/api/permissions/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_DOCTOR", "ROLE_ADMIN")
                 .requestMatchers("/api/consultations").hasAuthority("ROLE_DOCTOR")  
                 .requestMatchers("/api/consultations/patient").hasAuthority("ROLE_PATIENT")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/doctors/**").hasRole("DOCTOR")
-                .requestMatchers("/api/patients/**").hasRole("PATIENT")
+                .requestMatchers("/api/patients/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_DOCTOR", "ROLE_ADMIN")
                 .requestMatchers("/api/auth/register/doctor").hasRole("ADMIN")
                 .requestMatchers("/api/auth/register/patient").hasRole("ADMIN")
+                .requestMatchers("/api/auth/register").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);

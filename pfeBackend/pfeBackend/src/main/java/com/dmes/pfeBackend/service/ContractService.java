@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 // It uses Web3j to communicate with the Ethereum blockchain
 @Service
@@ -134,30 +135,34 @@ public class ContractService {
         return executeContractOperation(contract -> 
             CompletableFuture.supplyAsync(() -> {
                 try {
-                    // Get the raw data from the contract
-                    List<HospitalConsultation.Consultation> contractConsultations = 
-                        contract.getPatientConsultations(patientId, requesterId).send();
-                    
-                    // Map the contract consultations to your domain model
-                    List<Consultation> consultations = new ArrayList<>();
-                    
-                    for (HospitalConsultation.Consultation contractConsult : contractConsultations) {
-                        Consultation consultation = new Consultation();
-                        consultation.setPatientId(contractConsult.patientId);
-                        consultation.setDoctorId(contractConsult.doctorId);
-                        consultation.setDetails(contractConsult.details);
-                        consultation.setMetadata(contractConsult.metadata);
-                        consultation.setTimestamp(contractConsult.timestamp.longValue());
-                        consultation.setDeleted(contractConsult.isDeleted);
-                        
-                        consultations.add(consultation);
+                    // Check permission first
+                    boolean hasPermission = contract.isPermitted(patientId, requesterId).send();
+                    if (!hasPermission && !patientId.equals(requesterId) && !isEmergencyMode()) {
+                        throw new RuntimeException("Requester does not have permission to access patient consultations");
                     }
                     
-                    return consultations;
+                    // Get raw consultations from the contract
+                    List<HospitalConsultation.Consultation> rawConsultations = 
+                        contract.getPatientConsultations(patientId, requesterId).send();
                     
+                    if (rawConsultations == null) {
+                        return new ArrayList<Consultation>();
+                    }
+                    
+                    // Transform to our domain model
+                    return rawConsultations.stream()
+                        .map(raw -> new Consultation(
+                            raw.patientId,
+                            raw.doctorId,
+                            raw.details,
+                            raw.metadata,
+                            raw.timestamp.longValue(),
+                            raw.isDeleted
+                        ))
+                        .filter(c -> !c.isDeleted()) // Filter out deleted consultations
+                        .collect(Collectors.toList());
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new RuntimeException("Failed to get patient consultations: " + e.getMessage(), e);
+                    throw new RuntimeException("Error getting patient consultations: " + e.getMessage(), e);
                 }
             })
         );
@@ -236,5 +241,7 @@ public class ContractService {
             }
         });
     }
-
+    public String getContractAddress() {
+        return contractAddress;
+    }
 }

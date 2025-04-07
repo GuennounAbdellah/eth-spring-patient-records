@@ -53,10 +53,55 @@ const EditUserDialog = ({ isOpen, onClose, onEdit, user, userType }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onEdit(formData);
+const handleSubmit = (e) => {
+  e.preventDefault();
+  
+  const validationErrors = validateForm();
+  if (Object.keys(validationErrors).length > 0) {
+    setErrors(validationErrors);
+    return;
+  }
+  
+  let userData = {};
+  
+  // Common fields for all user types
+  userData = {
+    username: formData.username,
+    password: formData.password,
+    walletAddress: formData.walletAddress || "",
   };
+  
+  // Add type-specific fields
+  if (userType === "doctor") {
+    userData = {
+      ...userData,
+      licenseNumber: formData.licenseNumber,
+      specialization: formData.specialization,
+      hospitalAffiliation: formData.hospitalAffiliation || "",
+      professionalBio: "",
+      officeHours: ""
+    };
+  } else if (userType === "patient") {
+    userData = {
+      ...userData,
+      dateOfBirth: formData.dateOfBirth,
+      bloodGroup: formData.bloodGroup || "",
+      medicalRecordNumber: formData.medicalRecordNumber,
+      allergies: "",
+      chronicConditions: "",
+      emergencyContact: ""
+    };
+  } else if (userType === "admin") {
+    userData = {
+      ...userData,
+      department: "IT",
+      securityClearanceLevel: "Standard",
+      role: "ADMIN"
+    };
+  }
+  
+  onAdd(userData);
+};
 
   if (!isOpen) return null;
 

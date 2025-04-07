@@ -4,21 +4,16 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class PatientRegistrationRequest {
-    // Common fields
+public class PatientDetailsDTO {
+    private String userId;
     private String username;
-    private String password;
+    private String fullName;
     private String email;
-    private String walletAddress;
-    
-    // Patient-specific fields
     private String medicalRecordNumber;
     private LocalDate dateOfBirth;
     private String bloodGroup;
     private String allergies;
     private String chronicConditions;
     private String emergencyContact;
-    
-    // Role is implicit
-    private String role = "PATIENT";
+    private String walletAddress;
 }

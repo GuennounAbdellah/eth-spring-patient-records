@@ -49,12 +49,16 @@ public class UserService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
+        
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
 
         Role role;
         try {
             role = Role.valueOf(request.getRole().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid role: " + request.getRole());
+            throw new RuntimeException("Invalid role specified");
         }
 
         User user;
@@ -63,61 +67,30 @@ public class UserService {
         switch (role) {
             case PATIENT:
                 Patient patient = new Patient();
-                // Set patient-specific fields if provided in request
-                if (request.getMedicalRecordNumber() != null) {
-                    patient.setMedicalRecordNumber(request.getMedicalRecordNumber());
-                }
-                if (request.getDateOfBirth() != null) {
-                    patient.setDateOfBirth(request.getDateOfBirth());
-                }
-                if (request.getBloodGroup() != null) {
-                    patient.setBloodGroup(request.getBloodGroup());
-                }
-                if (request.getAllergies() != null) {
-                    patient.setAllergies(request.getAllergies());
-                }
-                if (request.getChronicConditions() != null) {
-                    patient.setChronicConditions(request.getChronicConditions());
-                }
-                if (request.getEmergencyContact() != null) {
-                    patient.setEmergencyContact(request.getEmergencyContact());
-                }
+                patient.setMedicalRecordNumber(request.getMedicalRecordNumber());
+                patient.setDateOfBirth(request.getDateOfBirth());
+                patient.setBloodGroup(request.getBloodGroup());
+                patient.setAllergies(request.getAllergies());
+                patient.setChronicConditions(request.getChronicConditions());
+                patient.setEmergencyContact(request.getEmergencyContact());
                 user = patient;
                 break;
                 
             case DOCTOR:
                 Doctor doctor = new Doctor();
-                // Set doctor-specific fields if provided in request
-                if (request.getLicenseNumber() != null) {
-                    doctor.setLicenseNumber(request.getLicenseNumber());
-                }
-                if (request.getSpecialization() != null) {
-                    doctor.setSpecialization(request.getSpecialization());
-                }
-                if (request.getHospitalAffiliation() != null) {
-                    doctor.setHospitalAffiliation(request.getHospitalAffiliation());
-                }
-                if (request.getProfessionalBio() != null) {
-                    doctor.setProfessionalBio(request.getProfessionalBio());
-                }
-                if (request.getOfficeHours() != null) {
-                    doctor.setOfficeHours(request.getOfficeHours());
-                }
+                doctor.setLicenseNumber(request.getLicenseNumber());
+                doctor.setSpecialization(request.getSpecialization());
+                doctor.setHospitalAffiliation(request.getHospitalAffiliation());
+                doctor.setProfessionalBio(request.getProfessionalBio());
+                doctor.setOfficeHours(request.getOfficeHours());
                 user = doctor;
                 break;
                 
             case ADMIN:
                 Admin admin = new Admin();
-                // Set admin-specific fields if provided in request
-                if (request.getDepartment() != null) {
-                    admin.setDepartment(request.getDepartment());
-                }
-                if (request.getSecurityClearanceLevel() != null) {
-                    admin.setSecurityClearanceLevel(request.getSecurityClearanceLevel());
-                }
-                if (request.getEmergencyAccessGrantor() != null) {
-                    admin.setEmergencyAccessGrantor(request.getEmergencyAccessGrantor());
-                }
+                admin.setDepartment(request.getDepartment());
+                admin.setSecurityClearanceLevel(request.getSecurityClearanceLevel());
+                admin.setEmergencyAccessGrantor(request.getEmergencyAccessGrantor());
                 user = admin;
                 break;
                 
@@ -127,52 +100,34 @@ public class UserService {
         
         // Set common fields
         user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());  // Set the email field
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(role);
         user.setActive(true);
         
-        // Save user to get ID
-        User savedUser;
-        
-        if (user instanceof Patient) {
-            savedUser = patientRepository.save((Patient) user);
-        } else if (user instanceof Doctor) {
-            savedUser = doctorRepository.save((Doctor) user);
-        } else if (user instanceof Admin) {
-            savedUser = adminRepository.save((Admin) user);
-        } else {
-            savedUser = userRepository.save(user);
+        // Set wallet address if provided
+        if (request.getWalletAddress() != null && !request.getWalletAddress().isEmpty()) {
+            user.setWalletAddress(request.getWalletAddress());
         }
         
-        // If wallet address is provided, register on blockchain
-        String walletAddress = request.getWalletAddress();
-        if (walletAddress != null && !walletAddress.isEmpty()) {
-            user.setWalletAddress(walletAddress);
-            
-            boolean isDoctor = role == Role.DOCTOR;
-            boolean isAdmin = role == Role.ADMIN;
-            
+        // Save user to database
+        User savedUser = saveUser(user);
+        
+        // Register user on blockchain if wallet address is provided
+        if (savedUser.getWalletAddress() != null && !savedUser.getWalletAddress().isEmpty()) {
             try {
                 contractService.registerUser(
                     savedUser.getId(), 
-                    walletAddress,
-                    isDoctor,
-                    isAdmin
-                ).join(); // Wait for completion
-            } catch (Exception ex) {
-                throw new RuntimeException("Failed to register user on blockchain", ex);
-            }
-            
-            // Update with wallet address
-            if (savedUser instanceof Patient) {
-                savedUser = patientRepository.save((Patient) savedUser);
-            } else if (savedUser instanceof Doctor) {
-                savedUser = doctorRepository.save((Doctor) savedUser);
-            } else if (savedUser instanceof Admin) {
-                savedUser = adminRepository.save((Admin) savedUser);
+                    savedUser.getWalletAddress(), 
+                    role == Role.DOCTOR,
+                    role == Role.ADMIN
+                ).join();  // Wait for completion
+            } catch (Exception e) {
+                // Log the error but don't fail the registration
+                System.err.println("Error registering user on blockchain: " + e.getMessage());
             }
         }
-
+        
         return savedUser;
     }
 
@@ -446,73 +401,58 @@ public class UserService {
 
     @Transactional
     public User registerDoctor(DoctorRegistrationRequest request) {
-        // Check if username is already taken
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username is already taken");
+        // Check if username already exists
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
         }
         
+        // Check if email already exists
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        // Create a new Doctor
         Doctor doctor = new Doctor();
         doctor.setUsername(request.getUsername());
+        doctor.setEmail(request.getEmail());
         doctor.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        doctor.setWalletAddress(request.getWalletAddress());
         doctor.setRole(Role.DOCTOR);
+        doctor.setActive(true);
+        
+        // Set doctor-specific fields
         doctor.setLicenseNumber(request.getLicenseNumber());
         doctor.setSpecialization(request.getSpecialization());
         doctor.setHospitalAffiliation(request.getHospitalAffiliation());
-        doctor.setActive(true);
+        doctor.setProfessionalBio(request.getProfessionalBio());
+        doctor.setOfficeHours(request.getOfficeHours());
         
-        // Save to database first to get ID
-        Doctor savedDoctor = (Doctor) userRepository.save(doctor);
+        // Set wallet address if provided
+        if (request.getWalletAddress() != null && !request.getWalletAddress().isEmpty()) {
+            doctor.setWalletAddress(request.getWalletAddress());
+        }
         
-        // Register in blockchain
-        try {
-            contractService.registerUser(
-                savedDoctor.getId(),
-                savedDoctor.getWalletAddress(),
-                true,  // isDoctor
-                false  // isAdmin
-            ).join(); // Wait for completion
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to register doctor on blockchain: " + e.getMessage(), e);
+        // Save doctor to database
+        Doctor savedDoctor = doctorRepository.save(doctor);
+        
+        // Register doctor on blockchain if wallet address is provided
+        if (savedDoctor.getWalletAddress() != null && !savedDoctor.getWalletAddress().isEmpty()) {
+            try {
+                contractService.registerUser(
+                    savedDoctor.getId(), 
+                    savedDoctor.getWalletAddress(), 
+                    true, // isDoctor
+                    false // isAdmin
+                ).join();  // Wait for completion
+            } catch (Exception e) {
+                // Log the error but don't fail the registration
+                System.err.println("Error registering doctor on blockchain: " + e.getMessage());
+            }
         }
         
         return savedDoctor;
     }
 
-    @Transactional
-    public User registerPatient(PatientRegistrationRequest request) {
-        // Check if username is already taken
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username is already taken");
-        }
-        
-        Patient patient = new Patient();
-        patient.setUsername(request.getUsername());
-        patient.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        patient.setWalletAddress(request.getWalletAddress());
-        patient.setRole(Role.PATIENT);
-        patient.setMedicalRecordNumber(request.getMedicalRecordNumber());
-        patient.setDateOfBirth(request.getDateOfBirth());
-        patient.setActive(true);
-        
-        // Save to database first to get ID
-        Patient savedPatient = (Patient) userRepository.save(patient);
-        
-        // Register in blockchain
-        try {
-            contractService.registerUser(
-                savedPatient.getId(),
-                savedPatient.getWalletAddress(),
-                false,  // isDoctor
-                false   // isAdmin
-            ).join(); // Wait for completion
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to register patient on blockchain: " + e.getMessage(), e);
-        }
-        
-        return savedPatient;
-    }
-
+   
     public List<Doctor> findAllDoctors() {
         // TODO Auto-generated method stub
         return doctorRepository.findAll();
@@ -521,6 +461,60 @@ public class UserService {
         return userRepository.findAll();
     }
 
-
-
+    @Transactional
+    public User registerPatient(PatientRegistrationRequest request) {
+        // Check if username already exists
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        
+        // Check if email already exists
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        // Create a new Patient
+        Patient patient = new Patient();
+        patient.setUsername(request.getUsername());
+        patient.setEmail(request.getEmail());
+        patient.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        patient.setRole(Role.PATIENT);
+        patient.setActive(true);
+        
+        // Set patient-specific fields
+        patient.setMedicalRecordNumber(request.getMedicalRecordNumber());
+        patient.setDateOfBirth(request.getDateOfBirth());
+        patient.setBloodGroup(request.getBloodGroup());
+        patient.setAllergies(request.getAllergies());
+        patient.setChronicConditions(request.getChronicConditions());
+        patient.setEmergencyContact(request.getEmergencyContact());
+        
+        // Set wallet address if provided
+        if (request.getWalletAddress() != null && !request.getWalletAddress().isEmpty()) {
+            patient.setWalletAddress(request.getWalletAddress());
+        }
+        
+        // Save patient to database
+        Patient savedPatient = patientRepository.save(patient);
+        
+        // Register patient on blockchain if wallet address is provided
+        if (savedPatient.getWalletAddress() != null && !savedPatient.getWalletAddress().isEmpty()) {
+            try {
+                contractService.registerUser(
+                    savedPatient.getId(), 
+                    savedPatient.getWalletAddress(), 
+                    false, // isDoctor
+                    false  // isAdmin
+                ).join();  // Wait for completion
+            } catch (Exception e) {
+                // Log the error but don't fail the registration
+                System.err.println("Error registering patient on blockchain: " + e.getMessage());
+            }
+        }
+        
+        return savedPatient;
+    }
+    public Optional<Patient> findPatientById(String id) {
+        return patientRepository.findById(id);
+    }
 }

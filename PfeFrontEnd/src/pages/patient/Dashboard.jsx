@@ -121,7 +121,7 @@ const Dashboard = () => {
                     {new Date(consultation.timestamp || consultation.date).toLocaleDateString('fr-FR')}
                   </div>
                   <div className="consultation-doctor">
-                    Dr. {consultation.doctorId || consultation.doctorName || "Inconnu"}
+                    Dr. { consultation.doctorName || consultation.doctorId || "Inconnu"}
                   </div>
                   <div className="consultation-diagnosis">
                     {consultation.details || consultation.diagnosis || "Pas de diagnostic disponible"}

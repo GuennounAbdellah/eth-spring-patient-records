@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/consultations")
 public class ConsultationController {
-
+    private static final Logger logger = Logger.getLogger(ConsultationController.class.getName());
+    
     private final ConsultationService consultationService;
     private final UserService userService;
 
@@ -28,7 +31,7 @@ public class ConsultationController {
     }
 
     @PostMapping
-    public ResponseEntity<String> addConsultation(@RequestBody ConsultationRequest request) {
+    public ResponseEntity<?> addConsultation(@RequestBody ConsultationRequest request) {
         try {
             // Get the authenticated doctor
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -36,19 +39,32 @@ public class ConsultationController {
             User doctor = userService.findByUsername(username);
             
             if (doctor == null) {
-                return ResponseEntity.badRequest().body("Doctor not found");
+                logger.warning("Doctor not found with username: " + username);
+                return ResponseEntity.badRequest().body(Map.of("error", "Doctor not found"));
             }
             
+            // Log attempt
+            logger.info("Adding consultation for patient " + request.getPatientId() + " by doctor " + doctor.getId());
+            
             // Call service and wait for completion
-            consultationService.addConsultation(request, doctor.getId()).join();
-            return ResponseEntity.ok("Consultation added successfully");
+            String transactionHash = consultationService.addConsultation(request, doctor.getId()).join();
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "Consultation added successfully",
+                "transactionHash", transactionHash
+            ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error adding consultation: " + e.getMessage());
+            logger.severe("Error adding consultation: " + e.getMessage());
+            e.printStackTrace();  // Log the stack trace for debugging
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Error adding consultation",
+                "details", e.getMessage()
+            ));
         }
     }
 
     @DeleteMapping
-    public ResponseEntity<String> deleteConsultation(@RequestBody DeleteConsultationRequest request) {
+    public ResponseEntity<?> deleteConsultation(@RequestBody DeleteConsultationRequest request) {
         try {
             // Get the authenticated user
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -56,36 +72,51 @@ public class ConsultationController {
             User user = userService.findByUsername(username);
             
             if (user == null) {
-                return ResponseEntity.badRequest().body("User not found");
+                return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
             }
             
             // Call service and wait for completion
-            consultationService.deleteConsultation(request).join();
-            return ResponseEntity.ok("Consultation deleted successfully");
+            String transactionHash = consultationService.deleteConsultation(request).join();
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "Consultation deleted successfully",
+                "transactionHash", transactionHash
+            ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error deleting consultation: " + e.getMessage());
+            logger.severe("Error deleting consultation: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Error deleting consultation",
+                "details", e.getMessage()
+            ));
         }
     }
 
     @GetMapping
     public ResponseEntity<?> getConsultations(@RequestParam String patientId) {
         try {
+            logger.info("Fetching consultations for patient: " + patientId);
+            
             // Get the authenticated doctor
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             User doctor = userService.findByUsername(username);
             
             if (doctor == null) {
+                logger.warning("Doctor not found with username: " + username);
                 return ResponseEntity.badRequest().body(Map.of("error", "Doctor not found"));
             }
             
-            // Call service
-            List<Consultation> consultations = consultationService
-                .getPatientConsultations(patientId, doctor.getId())
-                .join();
+            // Call service with explicit type to avoid CompletableFuture issues
+            CompletableFuture<List<Consultation>> futureResult = 
+                consultationService.getPatientConsultations(patientId, doctor.getId());
                 
+            List<Consultation> consultations = futureResult.join();
+            
+            logger.info("Retrieved " + consultations.size() + " consultations for patient " + patientId);
             return ResponseEntity.ok(consultations);
         } catch (Exception e) {
+            logger.severe("Error retrieving consultations: " + e.getMessage());
+            e.printStackTrace();  // Log the stack trace for debugging
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Error retrieving consultations", 
                 "details", e.getMessage()
@@ -109,9 +140,11 @@ public class ConsultationController {
             List<Consultation> consultations = consultationService
                 .getPatientConsultations(patient.getId(), patient.getId())
                 .join();
-                
+            
+            logger.info("Retrieved " + consultations.size() + " consultations for self-access by patient " + patient.getId());
             return ResponseEntity.ok(consultations);
         } catch (Exception e) {
+            logger.severe("Error retrieving patient consultations: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Error retrieving consultations", 
                 "details", e.getMessage()

@@ -28,15 +28,15 @@ function HomePage() {
           <div className="content-wrapper">
             <article className="info-text">
               <p>
-                <span className="highlight">DMES</span> ou Dossiers Médicales Electronique Sécurisé est une plateforme web
-                de <span className="highlight">Gestion</span> des dossiers médicales électronique basée sur la technologie{" "}
-                <span className="highlight">Blockchain</span> a la capacité d'agir sur le partage de données cliniques, en stockant les
-                données elles-mêmes ou en indiquant les personnes qui peuvent accéder à ces données, en garantissant la{" "}
-                <span className="highlight">sécurité</span> et la{" "}
-                <span className="highlight">Confidentialité</span>.
+                Notre responsabilité est de vous offrir une solution de{" "}
+                <span className="highlight">Gestion</span> des dossiers médicales électroniques basée sur la technologie{" "}
+                <span className="highlight">Blockchain</span>. Elle permet de partager des données cliniques en toute{" "}
+                <span className="highlight">sécurité</span> et avec une{" "}
+                <span className="highlight">confidentialité</span> garantie, tout en vous donnant un contrôle total sur{" "}
+                <span className="highlight">l'accès</span> à vos informations.
               </p>
               <p>
-                Aujourd'hui vous pouvez Simplifier la gestion de vos informations médicales avec une approche{" "}
+                Simplifiez dès aujourd'hui la gestion de vos informations médicales avec une approche{" "}
                 <span className="highlight">transparente</span> et{" "}
                 <span className="highlight">fiable</span>.
               </p>
@@ -51,9 +51,7 @@ function HomePage() {
           </div>
         </section>
         <Footer />
-
       </main>
-      
     </div>
   );
 }

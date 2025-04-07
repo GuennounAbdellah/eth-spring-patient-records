@@ -11,15 +11,11 @@ export const consultationService = {
   },
   
   addConsultation(consultationData) {
-    // Make sure the request matches the backend DTO
+    // Make sure the request matches the backend DTO format
     return api.post('/api/consultations', {
       patientId: consultationData.patientId,
-      details: consultationData.details || consultationData.diagnosis,
-      metadata: consultationData.metadata || JSON.stringify({
-        symptoms: consultationData.symptoms,
-        treatment: consultationData.treatment,
-        notes: consultationData.notes
-      })
+      details: consultationData.details,
+      metadata: consultationData.metadata
     });
   },
   
