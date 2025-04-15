@@ -123,7 +123,6 @@ public class UserService {
                     role == Role.ADMIN
                 ).join();  // Wait for completion
             } catch (Exception e) {
-                // Log the error but don't fail the registration
                 System.err.println("Error registering user on blockchain: " + e.getMessage());
             }
         }

@@ -13,7 +13,6 @@
   --danger-color: #dc3545;
   --info-color: #17a2b8;
   
-  /* Shadows */
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --button-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

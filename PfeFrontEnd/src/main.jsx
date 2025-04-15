@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 
-// Add loading spinner styles
+//  loading spinner styles
 const style = document.createElement('style');
 style.textContent = `
   .loading-container {

@@ -5,7 +5,7 @@ contract HospitalConsultation {
     address public owner;
     
     struct User {
-        string userId;     // External ID (from your backend system)
+        string userId;     // External ID 
         address wallet;    // Ethereum wallet address
         bool isDoctor;     // Role flag
         bool isAdmin;      // Role flag
@@ -273,7 +273,7 @@ contract HospitalConsultation {
         if (expiration == 0) {
             expiration = block.timestamp + 365 days;
         }
-        
+            
         permissions[patientId][doctorId] = Permission({
             patientId: patientId,
             doctorId: doctorId,
